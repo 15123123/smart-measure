@@ -1,6 +1,6 @@
 // pages/detail/detail.js
 const app = getApp();
-const { measureAPI } = require('../../utils/api.js');
+const { measureAPI, clothingAPI } = require('../../utils/api.js');
 
 Page({
   data: {
@@ -30,6 +30,7 @@ Page({
     
     // 服装数据
     clothingRows: [],
+    clothingSizes: {},  // 服装尺码数据
     
     // 收件信息
     receiver_name: '',
@@ -54,6 +55,35 @@ Page({
       });
       wx.setNavigationBarTitle({ title: '信息详情' });
       this.loadData(options.id);
+      this.loadClothingSizes();  // 加载服装尺码数据
+    }
+  },
+  
+  // 加载服装尺码数据
+  async loadClothingSizes() {
+    try {
+      const res = await clothingAPI.list();
+      if (res.data && Array.isArray(res.data)) {
+        // 构建尺码映射表
+        const sizesMap = {};
+        
+        // 获取每个服装的尺码
+        for (const item of res.data) {
+          try {
+            const sizeRes = await clothingAPI.getSizes(item.name);
+            if (sizeRes.data) {
+              sizesMap[item.name] = sizeRes.data;
+            }
+          } catch (e) {
+            console.warn('获取尺码失败:', item.name);
+          }
+        }
+        
+        this.setData({ clothingSizes: sizesMap });
+        logger.info('加载服装尺码成功:', Object.keys(sizesMap).length, '个服装');
+      }
+    } catch (err) {
+      logger.error('加载服装尺码失败:', err.message || err);
     }
   },
 
@@ -109,16 +139,92 @@ Page({
   // 解析服装数据
   parseClothingRows(data) {
     if (!data) return [];
-    if (Array.isArray(data)) return data;
-    if (typeof data === 'string') {
+    let rows = [];
+    if (Array.isArray(data)) {
+      rows = data;
+    } else if (typeof data === 'string') {
       try {
-        return JSON.parse(data);
+        rows = JSON.parse(data);
       } catch (e) {
         console.error('解析clothing_rows失败:', e);
         return [];
       }
     }
-    return [];
+    
+    // 如果没有recommendedSize字段，则自动计算
+    return rows.map(row => {
+      if (row.name && !row.recommendedSize) {
+        // 需要计算推荐尺码
+        const gender = this.data.gender || '';
+        const height = parseFloat(this.data.height) || 0;
+        const chest = parseFloat(this.data.chest_circumference) || 0;
+        const waist = parseFloat(this.data.waist_circumference) || 0;
+        const head = parseFloat(this.data.head_tail) || 0;
+        const shoeSize = parseFloat(this.data.shoe_size) || 0;
+        
+        row.recommendedSize = this.calculateRecommendedSize(row.name, gender, height, chest, waist, head, shoeSize);
+      }
+      return row;
+    });
+  },
+  
+  // 计算推荐尺码
+  calculateRecommendedSize(clothingName, gender, height, chest, waist, head, shoeSize) {
+    // 获取服装尺码数据
+    const clothingSizes = this.data.clothingSizes || [];
+    const sizes = clothingSizes[clothingName] || [];
+    
+    if (sizes.length === 0) {
+      return '-';
+    }
+    
+    // 根据服装类型匹配
+    for (const s of sizes) {
+      // 上衣：根据胸围和身高
+      if (s.gender === gender && chest > 0) {
+        const chestMin = parseFloat(s.chest_range?.split('-')[0]) || 0;
+        const chestMax = parseFloat(s.chest_range?.split('-')[1]) || 999;
+        if (chest >= chestMin && chest <= chestMax) {
+          // 检查身高范围
+          if (height > 0) {
+            const heightMin = parseFloat(s.height_range?.split('-')[0]) || 0;
+            const heightMax = parseFloat(s.height_range?.split('-')[1]) || 999;
+            if (height >= heightMin && height <= heightMax) {
+              return s.size || s.shoe_size || '-';
+            }
+          } else {
+            return s.size || s.shoe_size || '-';
+          }
+        }
+      }
+      // 下裤：根据腰围
+      else if (s.waist_range && waist > 0) {
+        const waistMin = parseFloat(s.waist_range?.split('-')[0]) || 0;
+        const waistMax = parseFloat(s.waist_range?.split('-')[1]) || 999;
+        if (waist >= waistMin && waist <= waistMax) {
+          return s.size || '-';
+        }
+      }
+      // 帽类：根据头围
+      else if (s.head_range && head > 0) {
+        const headMin = parseFloat(s.head_range?.split('-')[0]) || 0;
+        const headMax = parseFloat(s.head_range?.split('-')[1]) || 999;
+        if (head >= headMin && head <= headMax) {
+          return s.size || '-';
+        }
+      }
+      // 鞋类：根据鞋码
+      else if (s.shoe_size && shoeSize > 0) {
+        const shoeMin = parseFloat(s.shoe_size?.split('-')[0]) || 0;
+        const shoeMax = parseFloat(s.shoe_size?.split('-')[1]) || 999;
+        if (shoeSize >= shoeMin && shoeSize <= shoeMax) {
+          return s.shoe_size || '-';
+        }
+      }
+    }
+    
+    // 没有匹配到就返回第一个尺码
+    return sizes[0]?.size || sizes[0]?.shoe_size || '-';
   },
 
   // 字段名中文映射
