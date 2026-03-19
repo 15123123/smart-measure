@@ -1,0 +1,60 @@
+<!--pages/login/login.wxml-->
+<view class="container">
+  <!-- Header -->
+  <view class="page-header">
+    <view class="header-bg"></view>
+    <view class="header-content">
+      <view class="logo-area">
+        <view class="logo-icon">量</view>
+      </view>
+      <view class="header-title">{{systemName}}</view>
+      <view class="header-subtitle">精准测量 贴心服务</view>
+    </view>
+  </view>
+  
+  <!-- Login Card -->
+  <view class="login-card">
+    <view class="card-title">欢迎使用</view>
+    <view class="card-desc">登录后即可保存和管理您的量体数据</view>
+    
+    <!-- Error -->
+    <view class="error-box" wx:if="{{errorMsg}}">
+      <text>{{errorMsg}}</text>
+    </view>
+    
+    <!-- Button -->
+    <view wx:if="{{canUseGetUserProfile}}" class="btn-login" bindtap="getUserProfile">
+      <text wx:if="{{!loading}}">微信授权登录</text>
+      <text wx:else>登录中...</text>
+    </view>
+    
+    <view wx:else class="btn-login" bindtap="getUserInfo">
+      <text wx:if="{{!loading}}">微信授权登录</text>
+      <text wx:else>登录中...</text>
+    </view>
+    
+    <!-- Skip -->
+    <view class="skip-link" bindtap="onSkipLogin">
+      暂不登录，先看看 →
+    </view>
+  </view>
+  
+  <!-- Features -->
+  <view class="features-card">
+    <view class="feature-item">
+      <view class="feature-icon">🔒</view>
+      <view class="feature-title">信息安全</view>
+      <view class="feature-desc">数据严格保密</view>
+    </view>
+    <view class="feature-item">
+      <view class="feature-icon">⚡</view>
+      <view class="feature-title">快速便捷</view>
+      <view class="feature-desc">一键录入数据</view>
+    </view>
+    <view class="feature-item">
+      <view class="feature-icon">📦</view>
+      <view class="feature-title">免费配送</view>
+      <view class="feature-desc">快递送到家</view>
+    </view>
+  </view>
+</view>

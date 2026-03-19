@@ -1,0 +1,130 @@
+<!--pages/index/index.wxml-->
+<view class="container">
+  <!-- Loading -->
+  <view wx:if="{{loading}}" class="loading-view">
+    <view class="loader"></view>
+  </view>
+  
+  <block wx:else>
+    <!-- 搜索结果 -->
+    <block wx:if="{{matchedData}}">
+      <view class="result-wrapper">
+        <!-- 顶部 -->
+        <view class="result-header">
+          <view class="success-circle">
+            <text>✓</text>
+          </view>
+          <view class="header-title">查询成功</view>
+          <view class="header-subtitle">信息已找到</view>
+        </view>
+        
+        <!-- 信息卡片 -->
+        <view class="result-card">
+          <view class="info-list">
+            <view class="info-item">
+              <view class="info-left">
+                <text class="info-icon">🔖</text>
+                <text class="info-label">供给证号</text>
+              </view>
+              <text class="info-right">{{matchedData.police_no}}</text>
+            </view>
+            <view class="info-item">
+              <view class="info-left">
+                <text class="info-icon">👤</text>
+                <text class="info-label">检索号</text>
+              </view>
+              <text class="info-right">{{matchedData.name}}</text>
+            </view>
+            <view class="info-item no-line">
+              <view class="info-left">
+                <text class="info-icon">📋</text>
+                <text class="info-label">项目</text>
+              </view>
+              <text class="info-right project">{{matchedProject.name}}</text>
+            </view>
+          </view>
+        </view>
+        
+        <!-- 操作按钮 -->
+        <view class="action-buttons">
+          <view class="btn-primary" bindtap="onConfirm">
+            <text>开始量体</text>
+            <text class="btn-arrow">→</text>
+          </view>
+          <view class="btn-secondary" bindtap="onReset">
+            重新查询
+          </view>
+        </view>
+      </view>
+    </block>
+    
+    <!-- 搜索页面 -->
+    <block wx:else>
+      <view class="search-page">
+        <!-- 顶部区域 -->
+        <view class="top-section">
+          <view class="app-logo">
+            <text>量</text>
+          </view>
+          <view class="app-title">智能量体系统</view>
+          <view class="app-subtitle">Smart Measurement System</view>
+        </view>
+        
+        <!-- 搜索卡片 -->
+        <view class="search-card">
+          <view class="search-header">
+            <text class="search-title">查询信息</text>
+            <text class="search-desc">请输入供给证号或检索号</text>
+          </view>
+          
+          <view class="input-group">
+            <view class="input-wrap">
+              <text class="input-icon">🔍</text>
+              <input 
+                class="search-input" 
+                placeholder="输入供给证号或检索号" 
+                value="{{searchText}}"
+                bindinput="onSearchInput"
+                bindconfirm="onSearch"
+                confirm-type="search"
+              />
+              <view wx:if="{{searchText}}" class="clear-btn" bindtap="onClearSearch">✕</view>
+            </view>
+          </view>
+          
+          <view class="btn-search" bindtap="onSearch" loading="{{searchLoading}}">
+            <text wx:if="{{!searchLoading}}">立即查询</text>
+            <text wx:else>查询中...</text>
+          </view>
+          
+          <!-- 错误提示 -->
+          <view wx:if="{{errorMsg}}" class="error-tip">
+            <text>{{errorMsg}}</text>
+          </view>
+        </view>
+        
+        <!-- 提示卡片 -->
+        <view class="tips-card">
+          <view class="tips-header">
+            <text class="tips-icon">💡</text>
+            <text class="tips-title">使用提示</text>
+          </view>
+          <view class="tips-list">
+            <view class="tips-item">
+              <text class="tips-dot"></text>
+              <text class="tips-text">输入供给证号或检索号均可查询</text>
+            </view>
+            <view class="tips-item">
+              <text class="tips-dot"></text>
+              <text class="tips-text">查询成功后可进行量体数据录入</text>
+            </view>
+            <view class="tips-item">
+              <text class="tips-dot"></text>
+              <text class="tips-text">请确保输入信息准确无误</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </block>
+  </block>
+</view>

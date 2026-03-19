@@ -1,0 +1,168 @@
+// pages/index/index.js
+const app = getApp();
+const { projectAPI, measureAPI } = require('../../utils/api.js');
+
+Page({
+  data: {
+    projects: [],
+    loading: true,
+    searchText: '',
+    searchLoading: false,
+    errorMsg: '',
+    matchedData: null,
+    matchedProject: null,
+    systemName: '智能量体系统'
+  },
+
+  onLoad() {
+    var that = this;
+    wx.request({
+      url: app.globalData.apiBaseUrl + '/api/settings',
+      success: function(res) {
+        if(res.data && res.data.data && res.data.data.systemName){
+          that.setData({ systemName: res.data.data.systemName });
+        }
+      }
+    });
+    this.loadData();
+  },
+
+  async loadData() {
+    try {
+      const res = await projectAPI.list();
+      this.setData({
+        projects: res.data || [],
+        loading: false
+      });
+    } catch (err) {
+      console.error('Load projects failed:', err);
+      this.setData({ loading: false });
+    }
+  },
+
+  onSearchInput(e) {
+    this.setData({ 
+      searchText: e.detail.value,
+      errorMsg: '',
+      matchedData: null,
+      matchedProject: null
+    });
+  },
+
+  onClearSearch() {
+    this.setData({
+      searchText: '',
+      errorMsg: '',
+      matchedData: null,
+      matchedProject: null
+    });
+  },
+
+  // 判断输入类型：数字/字母=供给证号，中文=检索号
+  getSearchType(input) {
+    const trimmed = input.trim();
+    // 如果包含中文，认为是检索号
+    if (/[\u4e00-\u9fa5]/.test(trimmed)) {
+      return 'name';
+    }
+    // 如果是纯数字或字母组合，认为是供给证号
+    if (/^[a-zA-Z0-9]+$/.test(trimmed)) {
+      return 'police_no';
+    }
+    // 混合输入，默认按供给证号+检索号组合搜索
+    return 'both';
+  },
+
+  async onSearch() {
+    const { projects, searchText } = this.data;
+    const trimmed = searchText ? searchText.trim() : '';
+    
+    if (!trimmed) {
+      this.setData({ errorMsg: '请输入供给证号或检索号' });
+      return;
+    }
+    
+    if (!projects || projects.length === 0) {
+      this.setData({ errorMsg: '暂无可用项目' });
+      return;
+    }
+    
+    this.setData({ searchLoading: true, errorMsg: '' });
+    
+    const searchType = this.getSearchType(trimmed);
+    console.log('[搜索类型]', searchType, '输入:', trimmed);
+    
+    // 在所有项目中搜索
+    for (const project of projects) {
+      try {
+        let res;
+        
+        if (searchType === 'police_no') {
+          // 按供给证号精确查询
+          res = await measureAPI.exactQuery(project.id, trimmed, '');
+        } else if (searchType === 'name') {
+          // 按检索号精确查询
+          res = await measureAPI.exactQuery(project.id, '', trimmed);
+        } else {
+          // 混合输入，同时查询
+          res = await measureAPI.exactQuery(project.id, trimmed, trimmed);
+        }
+        
+        if (res && res.data && res.data.id) {
+          this.setData({
+            searchLoading: false,
+            matchedData: res.data,
+            matchedProject: project
+          });
+          return;
+        }
+      } catch (e) {
+        console.log('Query error:', project.name, e);
+      }
+    }
+    
+    // 精确查询没找到，尝试模糊搜索
+    for (const project of projects) {
+      try {
+        const res = await measureAPI.search(project.id, trimmed);
+        
+        if (res && res.data && res.data.length > 0) {
+          // 取第一个匹配结果
+          this.setData({
+            searchLoading: false,
+            matchedData: res.data[0],
+            matchedProject: project
+          });
+          return;
+        }
+      } catch (e) {
+        console.log('Search error:', project.name, e);
+      }
+    }
+    
+    this.setData({ 
+      searchLoading: false, 
+      errorMsg: '未找到匹配记录，请检查输入是否正确' 
+    });
+  },
+
+  onConfirm() {
+    const { matchedData, matchedProject } = this.data;
+    
+    if (!matchedData || !matchedProject) return;
+    
+    // 直接进入量体页面
+    wx.navigateTo({
+      url: `/pages/measure/measure?id=${matchedData.id}&projectId=${matchedProject.id}`
+    });
+  },
+
+  onReset() {
+    this.setData({
+      searchText: '',
+      errorMsg: '',
+      matchedData: null,
+      matchedProject: null
+    });
+  }
+});
