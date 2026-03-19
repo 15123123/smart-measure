@@ -103,10 +103,11 @@
         <view class="card-title-row">
           <text class="card-icon">👔</text>
           <text class="card-title">服装数据</text>
+          <text class="card-count">共{{clothingRows.length}}项</text>
         </view>
         <view class="clothing-table">
           <view class="table-header">
-            <text class="th-name">服装品名</text>
+            <text class="th-name">品名</text>
             <text class="th-recommend">推荐</text>
             <text class="th-size">尺码</text>
             <text class="th-remark">备注</text>

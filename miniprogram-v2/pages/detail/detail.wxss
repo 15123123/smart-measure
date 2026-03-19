@@ -202,15 +202,17 @@ page {
   border: 1rpx solid var(--border);
   border-radius: 16rpx;
   overflow: hidden;
+  margin-top: 20rpx;
 }
 
 .table-header {
   display: flex;
-  background: var(--bg-page);
-  padding: 20rpx 16rpx;
-  font-size: 26rpx;
+  align-items: center;
+  background: linear-gradient(135deg, #F3F4F6, #E5E7EB);
+  padding: 24rpx 16rpx;
+  font-size: 24rpx;
   font-weight: bold;
-  color: var(--text-secondary);
+  color: #6B7280;
 }
 
 .table-body {
@@ -219,34 +221,50 @@ page {
 
 .table-row {
   display: flex;
+  align-items: center;
   padding: 20rpx 16rpx;
-  border-top: 1rpx solid var(--border);
+  border-top: 1rpx solid #F3F4F6;
   font-size: 26rpx;
+  line-height: 1.5;
 }
 
-/* 优化列宽：服装品名占40%，其他各占20% */
-.th-name, .td-name { width: 40%; text-align: left; }
-.th-recommend, .td-recommend { width: 20%; text-align: center; }
-.th-size, .td-size { width: 20%; text-align: center; }
-.th-remark, .td-remark { width: 20%; text-align: center; }
+/* 优化列宽：服装品名占38%，推荐占22%，尺码占22%，备注占18% */
+.th-name, .td-name { width: 38%; text-align: left; padding-right: 8rpx; }
+.th-recommend, .td-recommend { width: 22%; text-align: center; }
+.th-size, .td-size { width: 22%; text-align: center; }
+.th-remark, .td-remark { width: 18%; text-align: center; padding-left: 8rpx; }
 
 /* 列内文字截断处理 */
 .td-name {
   color: var(--text-primary);
-  font-weight: 500;
+  font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  padding-right: 10rpx;
 }
 
-.td-recommend { color: var(--success); }
-.td-size { color: var(--primary); }
+.td-recommend { 
+  color: #8B5CF6; 
+  font-weight: bold;
+  font-size: 28rpx;
+}
+
+.td-size { 
+  color: var(--primary); 
+  font-weight: 600;
+  font-size: 28rpx;
+}
+
 .td-remark { 
-  color: var(--text-tertiary);
+  color: #9CA3AF;
+  font-size: 22rpx;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* 表头样式优化 */
+.th-name { padding-right: 8rpx; }
 }
 
 /* 表头样式优化 */
@@ -532,3 +550,5 @@ page {
   font-size: 26rpx;
   color: var(--text-primary);
 }
+
+/* 服装数量统计 */
