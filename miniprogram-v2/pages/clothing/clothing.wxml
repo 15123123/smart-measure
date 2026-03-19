@@ -19,8 +19,8 @@
       <view class="clothing-table">
         <view class="table-header">
           <text class="th-name">服装品名</text>
-          <text class="th-recommend">推荐</text>
-          <text class="th-size">尺码</text>
+          <text class="th-recommend">推荐尺码</text>
+          <text class="th-size">自填尺码</text>
           <text class="th-remark">备注</text>
         </view>
         

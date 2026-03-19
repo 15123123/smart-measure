@@ -147,10 +147,10 @@
                 <text class="clothing-name">{{item.name}}</text>
                 <view class="clothing-sizes">
                   <view class="size-tag recommend" wx:if="{{item.recommendedSize && item.recommendedSize !== '-'}}">
-                    <text>推荐: {{item.recommendedSize}}</text>
+                    <text>推荐尺码: {{item.recommendedSize}}</text>
                   </view>
                   <view class="size-tag green" wx:if="{{item.size && item.size !== '-'}}">
-                    <text>尺码: {{item.size}}</text>
+                    <text>自填尺码: {{item.size}}</text>
                   </view>
                 </view>
               </view>
