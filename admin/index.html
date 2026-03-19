@@ -1933,6 +1933,56 @@
     function editSubAccount(id){var list=JSON.parse(localStorage.getItem('subAccounts')||'[]');var sub=list.find(function(s){return s.id===id});if(!sub)return;var groupedPerms={};allPermissions.forEach(function(p){if(!groupedPerms[p.category])groupedPerms[p.category]=[];groupedPerms[p.category].push(p)});var h='<div id="editSubaccountModal" class="modal-overlay" style="display:flex;align-items:center;justify-content:center;z-index:9999"><div class="modal-content" style="max-width:600px;background:white;border-radius:16px;padding:2rem;box-shadow:0 20px 40px rgba(0,0,0,0.2);max-height:80vh;overflow-y:auto"><h3 style="margin:0 0 1.5rem 0;font-size:1.25rem;color:#1F2937">编辑子账号 - '+sub.username+'</h3><div style="margin-bottom:1.5rem"><label class="form-label">角色</label><select id="editSubRole" class="form-input" style="width:100%;padding:0.75rem;border:1px solid #D1D5DB;border-radius:8px"><option value="管理员"'+(sub.role==='管理员'?' selected':'')+'>管理员</option><option value="操作员"'+(sub.role==='操作员'?' selected':'')+'>操作员</option><option value="查看员"'+(sub.role==='查看员'?' selected':'')+'>查看员</option></select></div><div style="margin-bottom:1.5rem"><label class="form-label">权限分配</label>';Object.keys(groupedPerms).forEach(function(cat){h+='<div style="margin-bottom:1rem"><div style="font-weight:600;color:#374151;margin-bottom:0.5rem;padding-bottom:0.5rem;border-bottom:1px solid #E5E7EB">'+cat+'</div><div style="display:flex;flex-wrap:wrap;gap:0.5rem;padding:0.75rem;background:#F9FAFB;border-radius:8px">';groupedPerms[cat].forEach(function(p){h+='<label style="display:flex;align-items:center;gap:0.35rem;cursor:pointer;padding:0.35rem 0.5rem;background:white;border-radius:6px;border:1px solid #E5E7EB;font-size:0.8rem"><input type="checkbox" class="perm-cb-edit" value="'+p.key+'"'+(sub.permissions?.includes(p.key)?' checked':'')+'> '+p.label+'</label>'});h+='</div></div>'});h+='</div><div style="display:flex;gap:1rem;justify-content:flex-end;margin-top:1rem"><button onclick="document.getElementById(\'editSubaccountModal\').remove()" style="padding:0.625rem 1.25rem;border:1px solid #D1D5DB;border-radius:8px;background:white;cursor:pointer">取消</button><button onclick="saveEditSubAccount(\''+sub.id+'\')" style="padding:0.625rem 1.25rem;background:#6366F1;color:white;border:none;border-radius:8px;cursor:pointer">保存</button></div></div></div>';document.body.insertAdjacentHTML('beforeend',h)}
     function saveEditSubAccount(id){var list=JSON.parse(localStorage.getItem('subAccounts')||'[]');var sub=list.find(function(s){return s.id===id});if(!sub)return;sub.role=document.getElementById('editSubRole').value;var perms=[];document.querySelectorAll('#editSubaccountModal .perm-cb-edit:checked').forEach(function(cb){perms.push(cb.value)});sub.permissions=perms;localStorage.setItem('subAccounts',JSON.stringify(list));document.getElementById('editSubaccountModal').remove();loadSubAccounts()}
     function deleteSubAccount(id){if(!confirm('确定删除此子账号?'))return;var list=JSON.parse(localStorage.getItem('subAccounts')||'[]');list=list.filter(function(s){return s.id!==id});localStorage.setItem('subAccounts',JSON.stringify(list));loadSubAccounts()}
+    
+    function loadLoginLogs() {
+      var logs = JSON.parse(localStorage.getItem('loginLogs') || '[]');
+      var h = '<div style="display:flex;flex-direction:column;gap:0.75rem">';
+      if (logs.length === 0) {
+        h += '<div style="text-align:center;padding:2rem;color:#6B7280;font-size:0.9rem">暂无登录记录</div>';
+      } else {
+        logs.forEach(function(log) {
+          var statusColor = log.success ? '#10B981' : '#EF4444';
+          var statusText = log.success ? '成功' : '失败';
+          h += '<div style="background:white;border-radius:12px;padding:1rem;box-shadow:0 2px 8px rgba(0,0,0,0.06);border-left:4px solid ' + statusColor + '">';
+          h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">';
+          h += '<div style="font-weight:600;color:#1F2937">' + (log.username || '-') + '</div>';
+          h += '<span style="background:' + statusColor + ';color:white;padding:0.2rem 0.6rem;border-radius:4px;font-size:0.75rem">' + statusText + '</span>';
+          h += '</div>';
+          h += '<div style="font-size:0.8rem;color:#6B7280;display:flex;flex-wrap:wrap;gap:0.5rem">';
+          h += '<span><i class="fas fa-clock" style="margin-right:0.25rem"></i>' + (log.time || '-') + '</span>';
+          if (log.ip && log.ip !== '-') h += '<span><i class="fas fa-globe" style="margin-right:0.25rem"></i>' + log.ip + '</span>';
+          if (log.browser && log.browser !== '-') h += '<span><i class="fas fa-browser" style="margin-right:0.25rem"></i>' + log.browser + '</span>';
+          if (log.os && log.os !== '-') h += '<span><i class="fas fa-desktop" style="margin-right:0.25rem"></i>' + log.os + '</span>';
+          h += '</div></div>';
+        });
+      }
+      h += '</div>';
+      document.getElementById('loginLogList').innerHTML = h;
+    }
+    
+    function loadExportLogs() {
+      var logs = JSON.parse(localStorage.getItem('exportLogs') || '[]');
+      var h = '<div style="display:flex;flex-direction:column;gap:0.75rem">';
+      if (logs.length === 0) {
+        h += '<div style="text-align:center;padding:2rem;color:#6B7280;font-size:0.9rem">暂无导出记录</div>';
+      } else {
+        logs.forEach(function(log) {
+          h += '<div style="background:white;border-radius:12px;padding:1rem;box-shadow:0 2px 8px rgba(0,0,0,0.06);border-left:4px solid #F59E0B">';
+          h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">';
+          h += '<div style="font-weight:600;color:#1F2937">' + (log.operator || '-') + '</div>';
+          h += '<span style="background:#F59E0B;color:white;padding:0.2rem 0.6rem;border-radius:4px;font-size:0.75rem">' + (log.type || '导出') + '</span>';
+          h += '</div>';
+          h += '<div style="font-size:0.8rem;color:#6B7280">';
+          h += '<span><i class="fas fa-clock" style="margin-right:0.25rem"></i>' + (log.time || '-') + '</span>';
+          h += ' <span style="margin-left:1rem"><i class="fas fa-file-alt" style="margin-right:0.25rem"></i>' + (log.count || 0) + ' 条</span>';
+          if (log.ip && log.ip !== '-') h += ' <span style="margin-left:1rem"><i class="fas fa-globe" style="margin-right:0.25rem"></i>' + log.ip + '</span>';
+          h += '</div></div>';
+        });
+      }
+      h += '</div>';
+      document.getElementById('exportLogList').innerHTML = h;
+    }
+    
         // 获取IP地址
         async function getClientIP() {
           try {
@@ -2252,7 +2302,7 @@
         btnSubaccount.style.border = 'none';
         if(document.getElementById('subaccountSettings')){
           document.getElementById('subaccountSettings').style.display = 'block';
-          loadSubaccounts();
+          loadSubAccounts();
         }
       } else if(t === 'loginlog'){
         btnLoginLog.style.background = '#4F46E5';

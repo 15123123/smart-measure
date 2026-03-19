@@ -2,6 +2,13 @@
 const app = getApp();
 const { measureAPI, clothingAPI } = require('../../utils/api.js');
 
+// 日志工具
+const logger = {
+  info: (...args) => console.log('[DETAIL INFO]', new Date().toISOString(), ...args),
+  warn: (...args) => console.warn('[DETAIL WARN]', new Date().toISOString(), ...args),
+  error: (...args) => console.error('[DETAIL ERROR]', new Date().toISOString(), ...args)
+};
+
 Page({
   data: {
     id: '',
@@ -273,41 +280,50 @@ Page({
   // 加载历史
   async loadHistory(id) {
     try {
-      const res = await measureAPI.getModifyHistory(id);
+      const res = await measureAPI.getHistory(id);
       const historyData = res.data || [];
       
       // 处理历史数据，获取变更字段
       const processedHistory = historyData.map(item => {
+        if (!item) return null;
+        
         const changes = [];
-        const oldData = item.old_data || {};
-        const newData = item.new_data || {};
+        const oldData = (item.old_data && typeof item.old_data === 'object') ? item.old_data : {};
+        const newData = (item.new_data && typeof item.new_data === 'object') ? item.new_data : {};
         
-        const allKeys = [...new Set([...Object.keys(oldData), ...Object.keys(newData)])];
-        
-        allKeys.forEach(key => {
-          const oldVal = oldData[key];
-          const newVal = newData[key];
-          if (JSON.stringify(oldVal) !== JSON.stringify(newVal)) {
-            changes.push({
-              field: this.getFieldNameCN(key),
-              oldValue: this.formatValue(oldVal),
-              newValue: this.formatValue(newVal)
-            });
-          }
-        });
+        try {
+          const allKeys = [...new Set([...Object.keys(oldData), ...Object.keys(newData)])];
+          
+          allKeys.forEach(key => {
+            if (!key) return;
+            const oldVal = oldData[key];
+            const newVal = newData[key];
+            if (JSON.stringify(oldVal) !== JSON.stringify(newVal)) {
+              changes.push({
+                field: this.getFieldNameCN(key),
+                oldValue: this.formatValue(oldVal),
+                newValue: this.formatValue(newVal)
+              });
+            }
+          });
+        } catch (e) {
+          logger.warn('处理变更字段失败:', e.message);
+        }
         
         return {
-          ...item,
-          changes: changes,
-          user_id: item.user_id || '-'
+          id: item.id || Date.now().toString(),
+          action: item.action || '修改',
+          create_time: item.create_time || item.createTime || '-',
+          user_id: item.user_id || '-',
+          changes: changes
         };
-      });
+      }).filter(item => item !== null);
       
       this.setData({
         history: processedHistory
       });
     } catch (err) {
-      console.error('加载历史失败', err);
+      logger.error('加载历史失败', err.message || err);
       this.setData({ history: [] });
     }
   },
