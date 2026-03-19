@@ -1933,17 +1933,75 @@
     function editSubAccount(id){var list=JSON.parse(localStorage.getItem('subAccounts')||'[]');var sub=list.find(function(s){return s.id===id});if(!sub)return;var groupedPerms={};allPermissions.forEach(function(p){if(!groupedPerms[p.category])groupedPerms[p.category]=[];groupedPerms[p.category].push(p)});var h='<div id="editSubaccountModal" class="modal-overlay" style="display:flex;align-items:center;justify-content:center;z-index:9999"><div class="modal-content" style="max-width:600px;background:white;border-radius:16px;padding:2rem;box-shadow:0 20px 40px rgba(0,0,0,0.2);max-height:80vh;overflow-y:auto"><h3 style="margin:0 0 1.5rem 0;font-size:1.25rem;color:#1F2937">编辑子账号 - '+sub.username+'</h3><div style="margin-bottom:1.5rem"><label class="form-label">角色</label><select id="editSubRole" class="form-input" style="width:100%;padding:0.75rem;border:1px solid #D1D5DB;border-radius:8px"><option value="管理员"'+(sub.role==='管理员'?' selected':'')+'>管理员</option><option value="操作员"'+(sub.role==='操作员'?' selected':'')+'>操作员</option><option value="查看员"'+(sub.role==='查看员'?' selected':'')+'>查看员</option></select></div><div style="margin-bottom:1.5rem"><label class="form-label">权限分配</label>';Object.keys(groupedPerms).forEach(function(cat){h+='<div style="margin-bottom:1rem"><div style="font-weight:600;color:#374151;margin-bottom:0.5rem;padding-bottom:0.5rem;border-bottom:1px solid #E5E7EB">'+cat+'</div><div style="display:flex;flex-wrap:wrap;gap:0.5rem;padding:0.75rem;background:#F9FAFB;border-radius:8px">';groupedPerms[cat].forEach(function(p){h+='<label style="display:flex;align-items:center;gap:0.35rem;cursor:pointer;padding:0.35rem 0.5rem;background:white;border-radius:6px;border:1px solid #E5E7EB;font-size:0.8rem"><input type="checkbox" class="perm-cb-edit" value="'+p.key+'"'+(sub.permissions?.includes(p.key)?' checked':'')+'> '+p.label+'</label>'});h+='</div></div>'});h+='</div><div style="display:flex;gap:1rem;justify-content:flex-end;margin-top:1rem"><button onclick="document.getElementById(\'editSubaccountModal\').remove()" style="padding:0.625rem 1.25rem;border:1px solid #D1D5DB;border-radius:8px;background:white;cursor:pointer">取消</button><button onclick="saveEditSubAccount(\''+sub.id+'\')" style="padding:0.625rem 1.25rem;background:#6366F1;color:white;border:none;border-radius:8px;cursor:pointer">保存</button></div></div></div>';document.body.insertAdjacentHTML('beforeend',h)}
     function saveEditSubAccount(id){var list=JSON.parse(localStorage.getItem('subAccounts')||'[]');var sub=list.find(function(s){return s.id===id});if(!sub)return;sub.role=document.getElementById('editSubRole').value;var perms=[];document.querySelectorAll('#editSubaccountModal .perm-cb-edit:checked').forEach(function(cb){perms.push(cb.value)});sub.permissions=perms;localStorage.setItem('subAccounts',JSON.stringify(list));document.getElementById('editSubaccountModal').remove();loadSubAccounts()}
     function deleteSubAccount(id){if(!confirm('确定删除此子账号?'))return;var list=JSON.parse(localStorage.getItem('subAccounts')||'[]');list=list.filter(function(s){return s.id!==id});localStorage.setItem('subAccounts',JSON.stringify(list));loadSubAccounts()}
-    // 登录日志 - 优化版
-    function loadLoginLogs(){var logs=JSON.parse(localStorage.getItem('loginLogs')||'[]');var successCount=logs.filter(function(l){return l.success}).length;var failCount=logs.length-successCount;var h='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem"><div style="background:linear-gradient(135deg,#10B981,#34D399);border-radius:16px;padding:1.5rem;color:white;text-align:center"><div style="font-size:2rem;font-weight:700">'+logs.length+'</div><div style="font-size:0.85rem;opacity:0.9">总登录次数</div></div><div style="background:linear-gradient(135deg,#6366F1,#8B5CF6);border-radius:16px;padding:1.5rem;color:white;text-align:center"><div style="font-size:2rem;font-weight:700">'+successCount+'</div><div style="font-size:0.85rem;opacity:0.9">成功登录</div></div><div style="background:linear-gradient(135deg,#EF4444,#F87171);border-radius:16px;padding:1.5rem;color:white;text-align:center"><div style="font-size:2rem;font-weight:700">'+failCount+'</div><div style="font-size:0.85rem;opacity:0.9">登录失败</div></div></div>';h+='<div style="background:white;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08)"><table class="data-table" style="margin:0"><thead><tr style="background:#F9FAFB"><th style="padding:1rem">时间</th><th>用户名</th><th>IP地址</th><th>MAC地址</th><th>状态</th></tr></thead><tbody>';logs.slice(0,50).forEach(function(l){h+='<tr><td style="padding:0.875rem 1rem">'+l.time+'</td><td>'+l.username+'</td><td>'+(l.ip||'-')+'</td><td>'+(l.mac||'-')+'</td><td><span class="status-badge '+(l.success?'confirmed':'pending')+'" style="padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:600">'+(l.success?'成功':'失败')+'</span></td></tr>'});h+='</tbody></table></div>';if(logs.length>0)h+='<button class="btn btn-sm" onclick="clearLoginLogs()" style="margin-top:1rem;background:#EF4444;color:white;border:none;padding:0.5rem 1rem;border-radius:6px">清空日志</button>';document.getElementById('loginLogList').innerHTML=h}
-    function clearLoginLogs(){if(!confirm('确定清空所有登录日志?'))return;localStorage.setItem('loginLogs','[]');loadLoginLogs()}
-    function addLoginLog(username,success){var logs=JSON.parse(localStorage.getItem('loginLogs')||'[]');logs.unshift({time:new Date().toLocaleString('zh-CN'),username:username,success:success,ip:'-',mac:'-'});if(logs.length>100)logs=logs.slice(0,100);localStorage.setItem('loginLogs',JSON.stringify(logs))}
-    // 导出日志 - 优化版
-    function loadExportLogs(){var logs=JSON.parse(localStorage.getItem('exportLogs')||'[]');var totalCount=logs.reduce(function(s,l){return s+(l.count||0)},0);var h='<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-bottom:1.5rem"><div style="background:linear-gradient(135deg,#8B5CF6,#A78BFA);border-radius:16px;padding:1.5rem;color:white;text-align:center"><div style="font-size:2rem;font-weight:700">'+logs.length+'</div><div style="font-size:0.85rem;opacity:0.9">导出次数</div></div><div style="background:linear-gradient(135deg,#F59E0B,#FBBF24);border-radius:16px;padding:1.5rem;color:white;text-align:center"><div style="font-size:2rem;font-weight:700">'+totalCount+'</div><div style="font-size:0.85rem;opacity:0.9">导出总记录</div></div></div>';h+='<div style="background:white;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08)"><table class="data-table" style="margin:0"><thead><tr style="background:#F9FAFB"><th style="padding:1rem">时间</th><th>操作人</th><th>数据类型</th><th>记录数</th><th>IP地址</th></tr></thead><tbody>';logs.slice(0,50).forEach(function(l){h+='<tr><td style="padding:0.875rem 1rem">'+l.time+'</td><td>'+l.operator+'</td><td>'+l.type+'</td><td><span style="background:#E0E7FF;color:#4F46E5;padding:0.25rem 0.5rem;border-radius:4px;font-size:0.8rem;font-weight:600">'+l.count+'</span></td><td>'+(l.ip||'-')+'</td></tr>'});h+='</tbody></table></div>';if(logs.length>0)h+='<button class="btn btn-sm" onclick="clearExportLogs()" style="margin-top:1rem;background:#EF4444;color:white;border:none;padding:0.5rem 1rem;border-radius:6px">清空日志</button>';document.getElementById('exportLogList').innerHTML=h}
-    function clearExportLogs(){if(!confirm('确定清空所有导出日志?'))return;localStorage.setItem('exportLogs','[]');loadExportLogs()}
-    function addExportLog(operator,type,count){var logs=JSON.parse(localStorage.getItem('exportLogs')||'[]');logs.unshift({time:new Date().toLocaleString('zh-CN'),operator:operator,type:type,count:count,ip:'-'});if(logs.length>100)logs=logs.slice(0,100);localStorage.setItem('exportLogs',JSON.stringify(logs))}
-    function loadSubaccounts(){loadSubAccounts()}
-    function loadLoginLogsFn(){loadLoginLogs()}
-    function loadExportLogsFn(){loadExportLogs()}
+        // 获取IP地址
+        async function getClientIP() {
+          try {
+            const res = await fetch('https://api.ipify.org?format=json');
+            const data = await res.json();
+            return data.ip || '-';
+          } catch (e) {
+            return '-';
+          }
+        }
+        
+        // 获取浏览器信息
+        function getBrowserInfo() {
+          const ua = navigator.userAgent;
+          let browser = 'Unknown';
+          if (ua.includes('Chrome')) browser = 'Chrome';
+          else if (ua.includes('Firefox')) browser = 'Firefox';
+          else if (ua.includes('Safari')) browser = 'Safari';
+          else if (ua.includes('Edge')) browser = 'Edge';
+          return browser;
+        }
+        
+        // 获取操作系统
+        function getOS() {
+          const ua = navigator.userAgent;
+          if (ua.includes('Windows')) return 'Windows';
+          if (ua.includes('Mac')) return 'macOS';
+          if (ua.includes('Linux')) return 'Linux';
+          if (ua.includes('Android')) return 'Android';
+          if (ua.includes('iOS')) return 'iOS';
+          return 'Unknown';
+        }
+        
+        // 改进的登录日志记录
+        async function addLoginLog(username, success) {
+          const ip = await getClientIP();
+          const browser = getBrowserInfo();
+          const os = getOS();
+          const logs = JSON.parse(localStorage.getItem('loginLogs') || '[]');
+          logs.unshift({
+            time: new Date().toLocaleString('zh-CN'),
+            username: username,
+            success: success,
+            ip: ip,
+            browser: browser,
+            os: os,
+            device: navigator.platform || '-'
+          });
+          if (logs.length > 100) logs = logs.slice(0, 100);
+          localStorage.setItem('loginLogs', JSON.stringify(logs));
+        }
+        
+        // 改进的导出日志记录
+        async function addExportLog(operator, type, count) {
+          const ip = await getClientIP();
+          const logs = JSON.parse(localStorage.getItem('exportLogs') || '[]');
+          logs.unshift({
+            time: new Date().toLocaleString('zh-CN'),
+            operator: operator,
+            type: type,
+            count: count,
+            ip: ip
+          });
+          if (logs.length > 100) logs = logs.slice(0, 100);
+          localStorage.setItem('exportLogs', JSON.stringify(logs));
+        }
+        
+        // 导出日志 - 优化版
+        function loadExportLogs(){var logs=JSON.parse(localStorage.getItem('exportLogs')||'[]');var totalCount=logs.reduce(function(s,l){return s+(l.count||0)},0);var h='<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-bottom:1.5rem"><div style="background:linear-gradient(135deg,#8B5CF6,#A78BFA);border-radius:16px;padding:1.5rem;color:white;text-align:center"><div style="font-size:2rem;font-weight:700">'+logs.length+'</div><div style="font-size:0.85rem;opacity:0.9">导出次数</div></div><div style="background:linear-gradient(135deg,#F59E0B,#FBBF24);border-radius:16px;padding:1.5rem;color:white;text-align:center"><div style="font-size:2rem;font-weight:700">'+totalCount+'</div><div style="font-size:0.85rem;opacity:0.9">导出总记录</div></div></div>';h+='<div style="background:white;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08)"><table class="data-table" style="margin:0"><thead><tr style="background:#F9FAFB"><th style="padding:1rem">时间</th><th>操作人</th><th>数据类型</th><th>记录数</th><th>IP地址</th></tr></thead><tbody>';logs.slice(0,50).forEach(function(l){h+='<tr><td style="padding:0.875rem 1rem">'+l.time+'</td><td>'+l.operator+'</td><td>'+l.type+'</td><td><span style="background:#E0E7FF;color:#4F46E5;padding:0.25rem 0.5rem;border-radius:4px;font-size:0.8rem;font-weight:600">'+l.count+'</span></td><td>'+(l.ip||'-')+'</td></tr>'});h+='</tbody></table></div>';if(logs.length>0)h+='<button class="btn btn-sm" onclick="clearExportLogs()" style="margin-top:1rem;background:#EF4444;color:white;border:none;padding:0.5rem 1rem;border-radius:6px">清空日志</button>';document.getElementById('exportLogList').innerHTML=h}
     function checkLogin(){if(localStorage.getItem('adminToken')){document.getElementById('loginPage').style.display='none';document.getElementById('adminLayout').classList.add('show');loadDashboard()}}
     async function doLogin(){
       // 检查是否被锁定
