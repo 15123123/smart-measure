@@ -1758,6 +1758,27 @@
     </div>
   </div>
 
+  <!-- 尺码删除确认弹窗 -->
+  <div id="clothingSizeDeleteModal" class="modal-overlay">
+    <div class="modal-content" style="max-width:380px;border-radius:20px;overflow:hidden">
+      <div style="background:linear-gradient(135deg,#FEE2E2,#FECACA);padding:2rem;text-align:center">
+        <div style="width:60px;height:60px;background:linear-gradient(135deg,#EF4444,#DC2626);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;box-shadow:0 4px 15px rgba(239,68,68,0.4)">
+          <i class="fas fa-exclamation-triangle" style="font-size:1.5rem;color:white"></i>
+        </div>
+        <h3 style="margin:0;font-size:1.25rem;color:#991B1B;font-weight:700">确认删除尺码</h3>
+      </div>
+      <div style="padding:1.5rem;text-align:center">
+        <p style="margin:0;color:#374151;font-size:0.95rem;line-height:1.6">确定要删除尺码 <strong id="deleteSizeDisplay"></strong> 吗？</p>
+        <p style="margin:0.5rem 0 0;color:#6B7280;font-size:0.85rem">此操作不可恢复</p>
+        <input type="hidden" id="deleteClothingSizeId">
+      </div>
+      <div style="padding:0 1.5rem 1.5rem;display:flex;gap:0.75rem">
+        <button class="btn btn-outline" onclick="document.getElementById('clothingSizeDeleteModal').classList.remove('show')" style="flex:1;height:44px;border-radius:12px;border:2px solid #E5E7EB;color:#6B7280;font-weight:600">取消</button>
+        <button class="btn" onclick="confirmDeleteClothingSize()" style="flex:1;height:44px;background:linear-gradient(135deg,#EF4444,#DC2626);border:none;color:white;font-weight:600;border-radius:12px;box-shadow:0 4px 15px rgba(239,68,68,0.3)">确认删除</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 批量删除确认弹窗 -->
   <div id="batchDeleteModal" class="modal-overlay">
     <div class="modal-content" style="max-width:380px;border-radius:20px;overflow:hidden">
@@ -3282,9 +3303,12 @@
       renderClothingSizeTable();
     }
     
-    function deleteClothingSize(id){
+    function deleteClothingSize(id, sizeInfo){
       document.getElementById('deleteClothingSizeId').value = id;
-      document.getElementById('clothingDeleteModal').classList.add('show');
+      // 显示尺码删除确认弹窗
+      var displayText = sizeInfo || (currentClothingName ? currentClothingName + ' - 尺码' : '该尺码');
+      document.getElementById('deleteSizeDisplay').textContent = decodeURIComponent(displayText);
+      document.getElementById('clothingSizeDeleteModal').classList.add('show');
     }
     
     function closeClothingDeleteModal(){
@@ -3296,9 +3320,9 @@
       var sizes = JSON.parse(localStorage.getItem('clothingSizes_' + currentClothingName) || '[]');
       sizes = sizes.filter(function(s){return s.id !== id});
       localStorage.setItem('clothingSizes_' + currentClothingName, JSON.stringify(sizes));
-      alert('删除成功');
-      closeClothingDeleteModal();
+      document.getElementById('clothingSizeDeleteModal').classList.remove('show');
       renderClothingSizeTable();
+      alert('删除成功');
     }
     
     function triggerClothingExcelImport(){
