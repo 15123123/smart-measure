@@ -54,8 +54,21 @@ Page({
         projectName: decodeURIComponent(options.projectName || '')
       });
       wx.setNavigationBarTitle({ title: '信息详情' });
-      this.loadData(options.id);
-      this.loadClothingSizes();  // 加载服装尺码数据
+      // 先加载服装尺码，再加载数据
+      this.initPage(options.id);
+    }
+  },
+  
+  // 初始化页面：先加载尺码，再加载数据
+  async initPage(id) {
+    wx.showLoading({ title: '加载中...' });
+    try {
+      // 先加载服装尺码数据
+      await this.loadClothingSizes();
+      // 再加载量体数据
+      await this.loadData(id);
+    } finally {
+      wx.hideLoading();
     }
   },
   

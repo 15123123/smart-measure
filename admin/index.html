@@ -3257,8 +3257,7 @@
       var size = document.getElementById('bottomSize').value.trim();
       if(!size) return alert('请输入尺码');
       
-      var sizes = JSON.parse(localStorage.getItem('clothingSizes_' + currentClothingName) || '[]');
-      sizes.push({
+      var sizeData = {
         id: Date.now().toString(),
         gender: document.getElementById('bottomSizeGender').value,
         size: size,
@@ -3267,7 +3266,10 @@
         waist_range: document.getElementById('bottomWaistRange').value,
         hip_range: document.getElementById('bottomHipRange').value,
         remark: document.getElementById('bottomRemark').value
-      });
+      };
+      
+      var sizes = JSON.parse(localStorage.getItem('clothingSizes_' + currentClothingName) || '[]');
+      sizes.push(sizeData);
       
       localStorage.setItem('clothingSizes_' + currentClothingName, JSON.stringify(sizes));
       saveClothingSizeToDB(sizeData);
