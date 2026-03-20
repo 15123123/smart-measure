@@ -1881,12 +1881,6 @@
     let personPageSize = 50;
     let personCurrentPage = 1;
     window.onload = function(){
-      // 首次登录提示修改默认密码
-      if (isFirstLogin()) {
-        setTimeout(function() {
-          alert('⚠️ 安全提示：您使用的是默认密码！\n\n首次登录请前往【设置】>【修改密码】修改为安全的新密码。\n\n默认密码：admin123456');
-        }, 500);
-      }
       loadSettings();
       startClock();
       checkLogin();
@@ -2088,48 +2082,35 @@
         return;
       }
       
-      // 本地测试模式：允许测试密码直接登录
-      if (isTestModePassword(p)) {
-        // 直接用明文密码登录后端
-        try {
-          const res = await fetch(API + '/admin/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: u, password: p })
-          });
-          const data = await res.json();
-          
-          if (data.code === 0) {
-            recordLoginAttempt(true);
-            localStorage.setItem('adminToken', data.data?.token || 'ok');
-            addLoginLog('admin', true);
-            document.getElementById('loginPage').style.display = 'none';
-            document.getElementById('adminLayout').classList.add('show');
-            loadDashboard();
-          } else {
-            recordLoginAttempt(false);
-            addLoginLog(u, false);
-            alert(data.message || '用户名或密码错误');
-          }
-        } catch (err) {
-          console.error('Login error:', err);
-          alert('登录失败，请检查服务器是否运行');
+      // 直接发送登录请求到后端验证（后端从数据库读取最新密码）
+      try {
+        const res = await fetch(API + '/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: u, password: p })
+        });
+        const data = await res.json();
+        
+        if (data.code === 0) {
+          recordLoginAttempt(true);
+          localStorage.setItem('adminToken', data.data?.token || 'ok');
+          addLoginLog('admin', true);
+          document.getElementById('loginPage').style.display = 'none';
+          document.getElementById('adminLayout').classList.add('show');
+          loadDashboard();
+        } else {
+          recordLoginAttempt(false);
+          addLoginLog(u, false);
+          alert(data.message || '用户名或密码错误');
         }
-        return;
+      } catch (err) {
+        console.error('Login error:', err);
+        alert('登录失败，请检查服务器是否运行');
       }
+      return;
       
-      // 标准哈希验证流程
-      const inputHash = await hashPassword(p);
-      const storedHash = getPasswordHash();
-      
-      if (inputHash === storedHash) {
-        recordLoginAttempt(true);
-        localStorage.setItem('adminToken', 'ok');
-        addLoginLog('admin', true);
-        document.getElementById('loginPage').style.display = 'none';
-        document.getElementById('adminLayout').classList.add('show');
-        loadDashboard();
-      } else {
+      // 保留的逻辑（不再使用）
+      if (false) {
         recordLoginAttempt(false);
         addLoginLog(u, false);
         const attemptsLeft = 5 - loginAttempts;
