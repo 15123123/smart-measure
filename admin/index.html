@@ -2020,13 +2020,14 @@
               var resultClass = l.success ? '#D1FAE5' : '#FEE2E2';
               var resultText = l.success ? '成功' : '失败';
               var resultColor = l.success ? '#059669' : '#DC2626';
-              // 格式化时间 - 直接使用北京时间
+              // 格式化时间 - 手动转换为北京时间
               var timeStr = l.create_time ? l.create_time : '-';
               try {
                 var dt = new Date(l.create_time);
                 if (!isNaN(dt.getTime())) {
-                  // 直接用北京时间格式化
-                  timeStr = dt.toLocaleString('zh-CN', { hour12: false, timeZone: 'Asia/Shanghai' });
+                  // 手动加8小时（UTC转北京时间）
+                  dt.setHours(dt.getHours() + 8);
+                  timeStr = dt.toLocaleString('zh-CN', { hour12: false });
                 }
               } catch(e) {}
               // 格式化IP地址（移除IPv6前缀::ffff:）
@@ -2076,12 +2077,14 @@
             var h = '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-bottom:1.5rem"><div style="background:linear-gradient(135deg,#8B5CF6,#A78BFA);border-radius:16px;padding:1.5rem;color:white;text-align:center"><div style="font-size:2rem;font-weight:700">' + logs.length + '</div><div style="font-size:0.85rem;opacity:0.9">导出次数</div></div><div style="background:linear-gradient(135deg,#F59E0B,#FBBF24);border-radius:16px;padding:1.5rem;color:white;text-align:center"><div style="font-size:2rem;font-weight:700">' + totalCount + '</div><div style="font-size:0.85rem;opacity:0.9">导出总记录</div></div></div>';
             h += '<div style="background:white;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08)"><table class="data-table" style="margin:0;table-layout:fixed"><thead><tr style="background:#F9FAFB"><th style="padding:1rem;width:160px">时间</th><th style="width:100px">操作人</th><th style="width:180px">数据类型</th><th style="width:80px">记录数</th><th style="width:140px">IP地址</th></tr></thead><tbody>';
             logs.forEach(function(l) {
-              // 格式化时间 - 直接使用北京时间
+              // 格式化时间 - 手动转换为北京时间
               var timeStr = l.create_time ? l.create_time : '-';
               try {
                 var dt = new Date(l.create_time);
                 if (!isNaN(dt.getTime())) {
-                  timeStr = dt.toLocaleString('zh-CN', { hour12: false, timeZone: 'Asia/Shanghai' });
+                  // 手动加8小时
+                  dt.setHours(dt.getHours() + 8);
+                  timeStr = dt.toLocaleString('zh-CN', { hour12: false });
                 }
               } catch(e) {}
               // 格式化IP地址
@@ -2138,7 +2141,9 @@
             try {
               var detailDt = new Date(log.create_time);
               if (!isNaN(detailDt.getTime())) {
-                detailTimeStr = detailDt.toLocaleString('zh-CN', { hour12: false, timeZone: 'Asia/Shanghai' });
+                // 手动加8小时
+                detailDt.setHours(detailDt.getHours() + 8);
+                detailTimeStr = detailDt.toLocaleString('zh-CN', { hour12: false });
               }
             } catch(e) {}
             
