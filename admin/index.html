@@ -2025,6 +2025,8 @@
               if (l.create_time) {
                 var dt = new Date(l.create_time);
                 if (!isNaN(dt.getTime())) {
+                  // 转换为北京时间 (UTC+8)
+                  dt.setHours(dt.getHours() + 8);
                   timeStr = dt.toLocaleString('zh-CN', { hour12: false });
                 }
               }
@@ -2079,6 +2081,8 @@
               if (l.create_time) {
                 var dt = new Date(l.create_time);
                 if (!isNaN(dt.getTime())) {
+                  // 转换为北京时间 (UTC+8)
+                  dt.setHours(dt.getHours() + 8);
                   timeStr = dt.toLocaleString('zh-CN', { hour12: false });
                 }
               }
@@ -2131,8 +2135,18 @@
             });
             tableHtml += '</tbody></table>';
             
+            // 格式化时间为北京时间
+            var detailTimeStr = '-';
+            if (log.create_time) {
+              var detailDt = new Date(log.create_time);
+              if (!isNaN(detailDt.getTime())) {
+                detailDt.setHours(detailDt.getHours() + 8);
+                detailTimeStr = detailDt.toLocaleString('zh-CN', { hour12: false });
+              }
+            }
+            
             // 显示弹窗
-            var h = '<div id="exportDetailModal" class="modal-overlay" style="display:flex;align-items:center;justify-content:center;z-index:9999" onclick="if(event.target===this)this.remove()"><div class="modal-content" style="max-width:90vw;max-height:90vh;background:white;border-radius:16px;padding:1.5rem;box-shadow:0 20px 40px rgba(0,0,0,0.2);overflow:hidden;display:flex;flex-direction:column"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-shrink:0"><h3 style="margin:0;font-size:1.1rem;color:#1F2937">导出详情 - ' + (log.export_type || '未知') + '</h3><button onclick="document.getElementById(\'exportDetailModal\').remove()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#6B7280">&times;</button></div><div style="margin-bottom:1rem;flex-shrink:0;font-size:0.85rem;color:#6B7280">操作人: ' + (log.operator || '-') + ' | IP: ' + (log.ip || '-') + ' | 时间: ' + (log.create_time || '-') + ' | 记录数: ' + (log.record_count || 0) + '</div><div style="flex:1;overflow:auto;border:1px solid #E5E7EB;border-radius:8px">' + tableHtml + '</div></div></div>';
+            var h = '<div id="exportDetailModal" class="modal-overlay" style="display:flex;align-items:center;justify-content:center;z-index:9999" onclick="if(event.target===this)this.remove()"><div class="modal-content" style="max-width:90vw;max-height:90vh;background:white;border-radius:16px;padding:1.5rem;box-shadow:0 20px 40px rgba(0,0,0,0.2);overflow:hidden;display:flex;flex-direction:column"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-shrink:0"><h3 style="margin:0;font-size:1.1rem;color:#1F2937">导出详情 - ' + (log.export_type || '未知') + '</h3><button onclick="document.getElementById(\'exportDetailModal\').remove()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#6B7280">&times;</button></div><div style="margin-bottom:1rem;flex-shrink:0;font-size:0.85rem;color:#6B7280">操作人: ' + (log.operator || '-') + ' | IP: ' + (log.ip || '-') + ' | 时间: ' + detailTimeStr + ' | 记录数: ' + (log.record_count || 0) + '</div><div style="flex:1;overflow:auto;border:1px solid #E5E7EB;border-radius:8px">' + tableHtml + '</div></div></div>';
             document.body.insertAdjacentHTML('beforeend', h);
           } catch (e) {
             console.error('加载导出详情失败:', e);
