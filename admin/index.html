@@ -2021,12 +2021,26 @@
             const res = await fetch(API + '/login-logs');
             const data = await res.json();
             const logs = data.data || [];
-            let h = '<div style="background:white;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:1.5rem"><table class="data-table" style="margin:0"><thead><tr style="background:#F9FAFB"><th style="padding:1rem">时间</th><th>用户名</th><th>结果</th><th>IP地址</th><th>User-Agent</th></tr></thead><tbody>';
+            let h = '<div style="background:white;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:1.5rem"><table class="data-table" style="margin:0"><thead><tr style="background:#F9FAFB"><th style="padding:1rem">时间</th><th>用户名</th><th>结果</th><th>IP地址</th><th>浏览器/设备</th></tr></thead><tbody>';
             logs.forEach(function(l) {
               var resultClass = l.success ? '#D1FAE5' : '#FEE2E2';
               var resultText = l.success ? '成功' : '失败';
               var resultColor = l.success ? '#059669' : '#DC2626';
-              h += '<tr><td style="padding:0.875rem 1rem">' + (l.create_time || '-') + '</td><td>' + (l.username || '-') + '</td><td><span style="background:' + resultClass + ';color:' + resultColor + ';padding:0.25rem 0.5rem;border-radius:4px;font-size:0.8rem;font-weight:600">' + resultText + '</span></td><td>' + (l.ip || '-') + '</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + (l.user_agent || '') + '">' + (l.user_agent || '-') + '</td></tr>';
+              // 格式化时间
+              var timeStr = '-';
+              if (l.create_time) {
+                var dt = new Date(l.create_time);
+                if (!isNaN(dt.getTime())) {
+                  timeStr = dt.toLocaleString('zh-CN', { hour12: false });
+                }
+              }
+              // 简化User-Agent显示
+              var ua = l.user_agent || '-';
+              var uaDisplay = ua;
+              if (ua !== '-' && ua.length > 30) {
+                uaDisplay = ua.substring(0, 30) + '...';
+              }
+              h += '<tr><td style="padding:0.875rem 1rem">' + timeStr + '</td><td>' + (l.username || '-') + '</td><td><span style="background:' + resultClass + ';color:' + resultColor + ';padding:0.25rem 0.5rem;border-radius:4px;font-size:0.8rem;font-weight:600">' + resultText + '</span></td><td>' + (l.ip || '-') + '</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + ua + '">' + uaDisplay + '</td></tr>';
             });
             h += '</tbody></table></div>';
             if (logs.length > 0) h += '<button class="btn btn-sm" onclick="clearLoginLogs()" style="background:#EF4444;color:white;border:none;padding:0.5rem 1rem;border-radius:6px">清空日志</button>';
