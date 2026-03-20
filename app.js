@@ -385,7 +385,7 @@ app.get('/health', (req, res) => {
 });
 
 // 管理后台登录API（含安全防护）
-app.post('/api/admin/login', (req, res) => {
+app.post('/api/admin/login', async (req, res) => {
   const clientIp = req.ip || req.connection.remoteAddress || 'unknown';
   const { username, password } = req.body;
   
