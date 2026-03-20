@@ -417,17 +417,32 @@ app.post('/api/admin/login', async (req, res) => {
   let savedUsername = 'admin';
   let savedPassword = 'Admin@123456';
   
-  if (useMySQL && pool) {
-    try {
-      const [settings] = await pool.query('SELECT * FROM settings LIMIT 1');
-      if (settings.length > 0) {
-        savedUsername = settings[0].admin_username || 'admin';
-        savedPassword = settings[0].admin_password || 'Admin@123456';
-        logger.info('[登录] 从数据库读取账号密码');
-      }
-    } catch (e) {
-      logger.warn('[登录] 读取数据库密码失败，使用默认值');
+  // 尝试连接数据库读取密码
+  try {
+    // 检查是否需要重新连接
+    if (!pool) {
+      pool = mysql.createPool({
+        host: dbConfig.host,
+        port: dbConfig.port,
+        user: dbConfig.user,
+        password: dbConfig.password,
+        database: dbConfig.database,
+        waitForConnections: true,
+        connectionLimit: 10,
+        queueLimit: 0
+      });
     }
+    
+    const [settings] = await pool.query('SELECT * FROM settings LIMIT 1');
+    if (settings.length > 0) {
+      savedUsername = settings[0].admin_username || 'admin';
+      savedPassword = settings[0].admin_password || 'Admin@123456';
+      logger.info('[登录] 从数据库读取账号: ' + savedUsername + ', 密码: ' + savedPassword);
+    } else {
+      logger.warn('[登录] settings表为空，使用默认密码');
+    }
+  } catch (e) {
+    logger.error('[登录] 读取数据库密码失败: ' + e.message + '，使用默认密码');
   }
   
   // 本地测试模式：允许多种密码登录（包括SHA-256哈希）
@@ -745,28 +760,37 @@ app.post('/api/settings', async (req, res) => {
     
     // 同步更新数据库
     if (useMySQL && pool) {
-      // 先确保 settings 记录存在
-      const [existing] = await pool.query('SELECT id FROM settings LIMIT 1');
-      if (existing.length === 0) {
-        await pool.query('INSERT INTO settings (id, system_name, admin_username, admin_password) VALUES (?, ?, ?, ?)', 
-          [uuidv4(), '智能量体系统', 'admin', 'Admin@123456']);
+      try {
+        // 先确保 settings 记录存在
+        let [existing] = await pool.query('SELECT id, admin_password FROM settings LIMIT 1');
+        if (existing.length === 0) {
+          await pool.query('INSERT INTO settings (id, system_name, admin_username, admin_password) VALUES (?, ?, ?, ?)', 
+            [uuidv4(), '智能量体系统', 'admin', 'Admin@123456']);
+          logger.info('[设置] 创建了新的settings记录');
+          existing = await pool.query('SELECT id, admin_password FROM settings LIMIT 1');
+        }
+        
+        if (systemName) {
+          await pool.query('UPDATE settings SET system_name = ?', [systemName]);
+        }
+        if (adminUsername) {
+          await pool.query('UPDATE settings SET admin_username = ?', [adminUsername]);
+        }
+        if (adminPassword) {
+          await pool.query('UPDATE settings SET admin_password = ?', [adminPassword]);
+          logger.info('[设置] 保存新密码到数据库: ' + adminPassword);
+        }
+        
+        // 立即重新读取以确认保存成功
+        const [updated] = await pool.query('SELECT * FROM settings LIMIT 1');
+        if (updated.length > 0) {
+          logger.info('[设置] 数据库中当前密码: ' + updated[0].admin_password);
+        }
+      } catch (e) {
+        logger.error('[设置] 保存密码失败: ' + e.message);
       }
-      
-      if (systemName) {
-        await pool.query('UPDATE settings SET system_name = ?', [systemName]);
-      }
-      if (adminUsername) {
-        await pool.query('UPDATE settings SET admin_username = ?', [adminUsername]);
-      }
-      if (adminPassword) {
-        await pool.query('UPDATE settings SET admin_password = ?', [adminPassword]);
-      }
-      
-      // 立即重新读取以确认保存成功
-      const [updated] = await pool.query('SELECT * FROM settings LIMIT 1');
-      if (updated.length > 0) {
-        logger.info('[设置] 密码已保存到数据库');
-      }
+    } else {
+      logger.warn('[设置] 数据库未连接，密码未保存');
     }
     
     // 不同步到内存，密码只存数据库
