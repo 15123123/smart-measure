@@ -200,6 +200,19 @@ async function initDatabase() {
       )
     `);
     
+    // 创建登录日志表
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS login_logs (
+        id VARCHAR(36) PRIMARY KEY,
+        username VARCHAR(50),
+        ip VARCHAR(50),
+        user_agent VARCHAR(500),
+        success TINYINT(1) DEFAULT 0,
+        create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_create_time (create_time)
+      )
+    `);
+    
     // 初始化设置
     const [settings] = await connection.query('SELECT * FROM settings LIMIT 1');
     if (settings.length === 0) {
@@ -409,6 +422,8 @@ app.post('/api/admin/login', (req, res) => {
     if (username === savedUsername && (validHashes.includes(inputHash) || validHashes.includes(password))) {
       clearLoginAttempts(clientIp);
       console.log(`[登录] 成功(测试模式) - IP: ${clientIp}`);
+      // 记录登录日志
+      recordLoginLog(username, clientIp, req.get('User-Agent'), true);
       return res.json(ApiResponse.success({ token: 'admin_token_' + Date.now() }, '登录成功'));
     }
   }
@@ -417,6 +432,8 @@ app.post('/api/admin/login', (req, res) => {
     // 登录成功
     clearLoginAttempts(clientIp);
     console.log(`[登录] 成功 - IP: ${clientIp}, 用户名: ${username}`);
+    // 记录登录日志
+    recordLoginLog(username, clientIp, req.get('User-Agent'), true);
     return res.json(ApiResponse.success({ token: 'admin_token_' + Date.now() }, '登录成功'));
   } else {
     // 登录失败
@@ -424,12 +441,54 @@ app.post('/api/admin/login', (req, res) => {
     const record = security.loginAttempts.get(clientIp);
     const remainingAttempts = security.maxAttempts - (record?.attempts?.length || 0);
     console.log(`[登录] 失败 - IP: ${clientIp}, 剩余尝试: ${remainingAttempts}`);
+    // 记录登录日志
+    recordLoginLog(username, clientIp, req.get('User-Agent'), false);
     return res.status(401).json(ApiResponse.error(
       remainingAttempts > 0 
         ? `用户名或密码错误，还剩${remainingAttempts}次尝试` 
         : '登录尝试过多，请15分钟后再试',
       401
     ));
+  }
+});
+
+// 记录登录日志到数据库
+async function recordLoginLog(username, ip, userAgent, success) {
+  if (!useMySQL || !pool) return;
+  try {
+    const logId = uuidv4();
+    await pool.query(
+      'INSERT INTO login_logs (id, username, ip, user_agent, success) VALUES (?, ?, ?, ?, ?)',
+      [logId, username, ip, userAgent || '', success ? 1 : 0]
+    );
+  } catch (e) {
+    logger.error('[记录登录日志] 失败:', e.message);
+  }
+}
+
+// 获取登录日志API
+app.get('/api/login-logs', async (req, res) => {
+  try {
+    if (useMySQL && pool) {
+      const [logs] = await pool.query('SELECT * FROM login_logs ORDER BY create_time DESC LIMIT 100');
+      return res.json(ApiResponse.success(logs, '获取成功'));
+    }
+    res.json(ApiResponse.success([], '获取成功'));
+  } catch (e) {
+    res.status(500).json(ApiResponse.error('获取失败: ' + e.message, 500));
+  }
+});
+
+// 清空登录日志API
+app.delete('/api/login-logs', async (req, res) => {
+  try {
+    if (useMySQL && pool) {
+      await pool.query('DELETE FROM login_logs');
+      return res.json(ApiResponse.success(null, '删除成功'));
+    }
+    res.json(ApiResponse.success(null, '删除成功'));
+  } catch (e) {
+    res.status(500).json(ApiResponse.error('删除失败: ' + e.message, 500));
   }
 });
 
