@@ -2020,16 +2020,15 @@
               var resultClass = l.success ? '#D1FAE5' : '#FEE2E2';
               var resultText = l.success ? '成功' : '失败';
               var resultColor = l.success ? '#059669' : '#DC2626';
-              // 格式化时间
-              var timeStr = '-';
-              if (l.create_time) {
+              // 格式化时间 - 直接使用北京时间
+              var timeStr = l.create_time ? l.create_time : '-';
+              try {
                 var dt = new Date(l.create_time);
                 if (!isNaN(dt.getTime())) {
-                  // 转换为北京时间 (UTC+8)
-                  dt.setHours(dt.getHours() + 8);
-                  timeStr = dt.toLocaleString('zh-CN', { hour12: false });
+                  // 直接用北京时间格式化
+                  timeStr = dt.toLocaleString('zh-CN', { hour12: false, timeZone: 'Asia/Shanghai' });
                 }
-              }
+              } catch(e) {}
               // 格式化IP地址（移除IPv6前缀::ffff:）
               var ip = l.ip || '-';
               if (ip.startsWith('::ffff:')) {
@@ -2077,15 +2076,14 @@
             var h = '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-bottom:1.5rem"><div style="background:linear-gradient(135deg,#8B5CF6,#A78BFA);border-radius:16px;padding:1.5rem;color:white;text-align:center"><div style="font-size:2rem;font-weight:700">' + logs.length + '</div><div style="font-size:0.85rem;opacity:0.9">导出次数</div></div><div style="background:linear-gradient(135deg,#F59E0B,#FBBF24);border-radius:16px;padding:1.5rem;color:white;text-align:center"><div style="font-size:2rem;font-weight:700">' + totalCount + '</div><div style="font-size:0.85rem;opacity:0.9">导出总记录</div></div></div>';
             h += '<div style="background:white;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08)"><table class="data-table" style="margin:0;table-layout:fixed"><thead><tr style="background:#F9FAFB"><th style="padding:1rem;width:160px">时间</th><th style="width:100px">操作人</th><th style="width:180px">数据类型</th><th style="width:80px">记录数</th><th style="width:140px">IP地址</th></tr></thead><tbody>';
             logs.forEach(function(l) {
-              var timeStr = '-';
-              if (l.create_time) {
+              // 格式化时间 - 直接使用北京时间
+              var timeStr = l.create_time ? l.create_time : '-';
+              try {
                 var dt = new Date(l.create_time);
                 if (!isNaN(dt.getTime())) {
-                  // 转换为北京时间 (UTC+8)
-                  dt.setHours(dt.getHours() + 8);
-                  timeStr = dt.toLocaleString('zh-CN', { hour12: false });
+                  timeStr = dt.toLocaleString('zh-CN', { hour12: false, timeZone: 'Asia/Shanghai' });
                 }
-              }
+              } catch(e) {}
               // 格式化IP地址
               var ip = l.ip || '-';
               if (ip.startsWith('::ffff:')) {
@@ -2136,14 +2134,13 @@
             tableHtml += '</tbody></table>';
             
             // 格式化时间为北京时间
-            var detailTimeStr = '-';
-            if (log.create_time) {
+            var detailTimeStr = log.create_time ? log.create_time : '-';
+            try {
               var detailDt = new Date(log.create_time);
               if (!isNaN(detailDt.getTime())) {
-                detailDt.setHours(detailDt.getHours() + 8);
-                detailTimeStr = detailDt.toLocaleString('zh-CN', { hour12: false });
+                detailTimeStr = detailDt.toLocaleString('zh-CN', { hour12: false, timeZone: 'Asia/Shanghai' });
               }
-            }
+            } catch(e) {}
             
             // 显示弹窗
             var h = '<div id="exportDetailModal" class="modal-overlay" style="display:flex;align-items:center;justify-content:center;z-index:9999" onclick="if(event.target===this)this.remove()"><div class="modal-content" style="max-width:90vw;max-height:90vh;background:white;border-radius:16px;padding:1.5rem;box-shadow:0 20px 40px rgba(0,0,0,0.2);overflow:hidden;display:flex;flex-direction:column"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-shrink:0"><h3 style="margin:0;font-size:1.1rem;color:#1F2937">导出详情 - ' + (log.export_type || '未知') + '</h3><button onclick="document.getElementById(\'exportDetailModal\').remove()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#6B7280">&times;</button></div><div style="margin-bottom:1rem;flex-shrink:0;font-size:0.85rem;color:#6B7280">操作人: ' + (log.operator || '-') + ' | IP: ' + (log.ip || '-') + ' | 时间: ' + detailTimeStr + ' | 记录数: ' + (log.record_count || 0) + '</div><div style="flex:1;overflow:auto;border:1px solid #E5E7EB;border-radius:8px">' + tableHtml + '</div></div></div>';
