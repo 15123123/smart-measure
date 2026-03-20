@@ -250,7 +250,9 @@ Page({
   // 字段名中文映射
   fieldNameCN: {
     'name': '检索号',
+    'search_no': '检索号',
     'police_no': '供给证号',
+    'supply_no': '供给证号',
     'gender': '性别',
     'height': '身高',
     'weight': '体重',
@@ -265,15 +267,22 @@ Page({
     'shoe_size': '鞋码',
     'remark': '备注',
     'clothing_rows': '服装数据',
+    'clothing_name': '服装名称',
+    'clothing_size': '服装尺码',
     'receiver_name': '收件人',
     'receiver_phone': '联系电话',
     'receiver_address': '收件地址',
+    'receiver': '收件人',
+    'phone': '联系电话',
+    'address': '收件地址',
     'status': '状态',
     'user_id': '操作人',
+    'project_id': '项目ID',
+    'created_at': '创建时间',
+    'updated_at': '更新时间',
     // 服装字段
     'recommendedSize': '推荐尺码',
     'size': '尺码',
-    'clothing_name': '服装名称',
     'clothing_remark': '服装备注'
   },
 

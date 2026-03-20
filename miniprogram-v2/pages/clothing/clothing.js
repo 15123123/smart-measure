@@ -343,8 +343,17 @@ Page({
     this.setData({ saving: true });
     
     try {
+      // 获取用户ID
+      let userId = wx.getStorageSync('userId');
+      if (!userId) {
+        userId = `guest_${Date.now()}`;
+        wx.setStorageSync('userId', userId);
+      }
+      
       const res = await measureAPI.update(id, {
-        clothing_rows: clothingRows
+        clothing_rows: clothingRows,
+        user_id: userId,
+        source: 'miniprogram'
       }, 'miniprogram');
       
       wx.showModal({
