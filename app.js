@@ -213,6 +213,20 @@ async function initDatabase() {
       )
     `);
     
+    // 创建导出日志表
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS export_logs (
+        id VARCHAR(36) PRIMARY KEY,
+        operator VARCHAR(50),
+        ip VARCHAR(50),
+        export_type VARCHAR(50),
+        record_count INT DEFAULT 0,
+        export_data TEXT,
+        create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_create_time (create_time)
+      )
+    `);
+    
     // 初始化设置
     const [settings] = await connection.query('SELECT * FROM settings LIMIT 1');
     if (settings.length === 0) {
@@ -500,6 +514,64 @@ app.delete('/api/login-logs', async (req, res) => {
     res.json(ApiResponse.success(null, '删除成功'));
   } catch (e) {
     res.status(500).json(ApiResponse.error('删除失败: ' + e.message, 500));
+  }
+});
+
+// 导出日志记录
+async function recordExportLog(operator, exportType, recordCount, exportData, ip) {
+  if (!useMySQL || !pool) return;
+  try {
+    const logId = uuidv4();
+    await pool.query(
+      'INSERT INTO export_logs (id, operator, ip, export_type, record_count, export_data) VALUES (?, ?, ?, ?, ?, ?)',
+      [logId, operator, ip, exportType, recordCount, JSON.stringify(exportData)]
+    );
+  } catch (e) {
+    logger.error('[记录导出日志] 失败:', e.message);
+  }
+}
+
+// 获取导出日志API
+app.get('/api/export-logs', async (req, res) => {
+  try {
+    if (useMySQL && pool) {
+      const [logs] = await pool.query('SELECT * FROM export_logs ORDER BY create_time DESC LIMIT 100');
+      return res.json(ApiResponse.success(logs, '获取成功'));
+    }
+    res.json(ApiResponse.success([], '获取成功'));
+  } catch (e) {
+    res.status(500).json(ApiResponse.error('获取失败: ' + e.message, 500));
+  }
+});
+
+// 清空导出日志API
+app.delete('/api/export-logs', async (req, res) => {
+  try {
+    if (useMySQL && pool) {
+      await pool.query('DELETE FROM export_logs');
+      return res.json(ApiResponse.success(null, '删除成功'));
+    }
+    res.json(ApiResponse.success(null, '删除成功'));
+  } catch (e) {
+    res.status(500).json(ApiResponse.error('删除失败: ' + e.message, 500));
+  }
+});
+
+// 记录导出日志API
+app.post('/api/export-logs', async (req, res) => {
+  try {
+    const { operator, exportType, recordCount, exportData, ip } = req.body;
+    if (useMySQL && pool) {
+      const logId = uuidv4();
+      await pool.query(
+        'INSERT INTO export_logs (id, operator, ip, export_type, record_count, export_data) VALUES (?, ?, ?, ?, ?, ?)',
+        [logId, operator || 'admin', ip || '', exportType || '', recordCount || 0, JSON.stringify(exportData || [])]
+      );
+      return res.json(ApiResponse.success(null, '记录成功'));
+    }
+    res.json(ApiResponse.success(null, '记录成功'));
+  } catch (e) {
+    res.status(500).json(ApiResponse.error('记录失败: ' + e.message, 500));
   }
 });
 

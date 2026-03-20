@@ -2065,8 +2065,90 @@
           }
         }
         
-        // 导出日志 - 优化版
-        function loadExportLogs(){var logs=JSON.parse(localStorage.getItem('exportLogs')||'[]');var totalCount=logs.reduce(function(s,l){return s+(l.count||0)},0);var h='<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-bottom:1.5rem"><div style="background:linear-gradient(135deg,#8B5CF6,#A78BFA);border-radius:16px;padding:1.5rem;color:white;text-align:center"><div style="font-size:2rem;font-weight:700">'+logs.length+'</div><div style="font-size:0.85rem;opacity:0.9">导出次数</div></div><div style="background:linear-gradient(135deg,#F59E0B,#FBBF24);border-radius:16px;padding:1.5rem;color:white;text-align:center"><div style="font-size:2rem;font-weight:700">'+totalCount+'</div><div style="font-size:0.85rem;opacity:0.9">导出总记录</div></div></div>';h+='<div style="background:white;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08)"><table class="data-table" style="margin:0"><thead><tr style="background:#F9FAFB"><th style="padding:1rem">时间</th><th>操作人</th><th>数据类型</th><th>记录数</th><th>IP地址</th></tr></thead><tbody>';logs.slice(0,50).forEach(function(l){h+='<tr><td style="padding:0.875rem 1rem">'+l.time+'</td><td>'+l.operator+'</td><td>'+l.type+'</td><td><span style="background:#E0E7FF;color:#4F46E5;padding:0.25rem 0.5rem;border-radius:4px;font-size:0.8rem;font-weight:600">'+l.count+'</span></td><td>'+(l.ip||'-')+'</td></tr>'});h+='</tbody></table></div>';if(logs.length>0)h+='<button class="btn btn-sm" onclick="clearExportLogs()" style="margin-top:1rem;background:#EF4444;color:white;border:none;padding:0.5rem 1rem;border-radius:6px">清空日志</button>';document.getElementById('exportLogList').innerHTML=h}
+        // 导出日志 - 从服务器获取
+        async function loadExportLogs() {
+          try {
+            const res = await fetch(API + '/export-logs');
+            const data = await res.json();
+            const logs = data.data || [];
+            var totalCount = logs.reduce(function(s, l) { return s + (l.record_count || 0); }, 0);
+            var h = '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-bottom:1.5rem"><div style="background:linear-gradient(135deg,#8B5CF6,#A78BFA);border-radius:16px;padding:1.5rem;color:white;text-align:center"><div style="font-size:2rem;font-weight:700">' + logs.length + '</div><div style="font-size:0.85rem;opacity:0.9">导出次数</div></div><div style="background:linear-gradient(135deg,#F59E0B,#FBBF24);border-radius:16px;padding:1.5rem;color:white;text-align:center"><div style="font-size:2rem;font-weight:700">' + totalCount + '</div><div style="font-size:0.85rem;opacity:0.9">导出总记录</div></div></div>';
+            h += '<div style="background:white;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08)"><table class="data-table" style="margin:0;table-layout:fixed"><thead><tr style="background:#F9FAFB"><th style="padding:1rem;width:160px">时间</th><th style="width:100px">操作人</th><th style="width:180px">数据类型</th><th style="width:80px">记录数</th><th style="width:140px">IP地址</th></tr></thead><tbody>';
+            logs.forEach(function(l) {
+              var timeStr = '-';
+              if (l.create_time) {
+                var dt = new Date(l.create_time);
+                if (!isNaN(dt.getTime())) {
+                  timeStr = dt.toLocaleString('zh-CN', { hour12: false });
+                }
+              }
+              // 格式化IP地址
+              var ip = l.ip || '-';
+              if (ip.startsWith('::ffff:')) {
+                ip = ip.substring(7);
+              }
+              h += '<tr onclick="showExportDetail(\'' + l.id + '\')" style="cursor:pointer;background:#fff;transition:background 0.2s" onmouseover="this.style.background=#F3F4F6" onmouseout="this.style.background=#fff"><td style="padding:0.875rem 1rem">' + timeStr + '</td><td>' + (l.operator || '-') + '</td><td style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (l.export_type || '-') + '</td><td><span style="background:#E0E7FF;color:#4F46E5;padding:0.25rem 0.5rem;border-radius:4px;font-size:0.8rem;font-weight:600">' + (l.record_count || 0) + '</span></td><td>' + ip + '</td></tr>';
+            });
+            h += '</tbody></table></div>';
+            if (logs.length > 0) h += '<button class="btn btn-sm" onclick="clearExportLogs()" style="margin-top:1rem;background:#EF4444;color:white;border:none;padding:0.5rem 1rem;border-radius:6px">清空日志</button>';
+            document.getElementById('exportLogList').innerHTML = h;
+          } catch (e) {
+            console.error('加载导出日志失败:', e);
+            document.getElementById('exportLogList').innerHTML = '<div style="text-align:center;padding:2rem;color:#999">加载失败</div>';
+          }
+        }
+        
+        // 显示导出详情
+        async function showExportDetail(logId) {
+          try {
+            const res = await fetch(API + '/export-logs');
+            const data = await res.json();
+            const logs = data.data || [];
+            const log = logs.find(function(l) { return l.id === logId; });
+            if (!log) return;
+            
+            var exportData = [];
+            try {
+              exportData = JSON.parse(log.export_data || '[]');
+            } catch (e) {
+              exportData = [];
+            }
+            
+            // 构建表格HTML
+            var tableHtml = '<table style="width:100%;border-collapse:collapse;font-size:0.8rem"><thead><tr style="background:#F3F4F6">';
+            if (exportData.length > 0) {
+              var keys = Object.keys(exportData[0]);
+              keys.forEach(function(k) {
+                tableHtml += '<th style="padding:8px;border:1px solid #E5E7EB;text-align:left">' + k + '</th>';
+              });
+            }
+            tableHtml += '</tr></thead><tbody>';
+            exportData.forEach(function(row) {
+              var keys = Object.keys(row);
+              keys.forEach(function(k) {
+                tableHtml += '<td style="padding:8px;border:1px solid #E5E7EB">' + (row[k] || '-') + '</td>';
+              });
+            });
+            tableHtml += '</tbody></table>';
+            
+            // 显示弹窗
+            var h = '<div id="exportDetailModal" class="modal-overlay" style="display:flex;align-items:center;justify-content:center;z-index:9999" onclick="if(event.target===this)this.remove()"><div class="modal-content" style="max-width:90vw;max-height:90vh;background:white;border-radius:16px;padding:1.5rem;box-shadow:0 20px 40px rgba(0,0,0,0.2);overflow:hidden;display:flex;flex-direction:column"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-shrink:0"><h3 style="margin:0;font-size:1.1rem;color:#1F2937">导出详情 - ' + (log.export_type || '未知') + '</h3><button onclick="document.getElementById(\'exportDetailModal\').remove()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#6B7280">&times;</button></div><div style="margin-bottom:1rem;flex-shrink:0;font-size:0.85rem;color:#6B7280">操作人: ' + (log.operator || '-') + ' | IP: ' + (log.ip || '-') + ' | 时间: ' + (log.create_time || '-') + ' | 记录数: ' + (log.record_count || 0) + '</div><div style="flex:1;overflow:auto;border:1px solid #E5E7EB;border-radius:8px">' + tableHtml + '</div></div></div>';
+            document.body.insertAdjacentHTML('beforeend', h);
+          } catch (e) {
+            console.error('加载导出详情失败:', e);
+            alert('加载失败');
+          }
+        }
+        
+        async function clearExportLogs() {
+          if (!confirm('确定要清空导出日志吗？')) return;
+          try {
+            await fetch(API + '/export-logs', { method: 'DELETE' });
+            loadExportLogs();
+          } catch (e) {
+            alert('清空失败');
+          }
+        }
     function checkLogin(){if(localStorage.getItem('adminToken')){document.getElementById('loginPage').style.display='none';document.getElementById('adminLayout').classList.add('show');loadDashboard()}}
     async function doLogin(){
       // 检查是否被锁定
@@ -2333,7 +2415,36 @@
     function closeCreateProjectModal(){document.getElementById('createProjectModal').classList.remove('show')}
     async function createProjectFromModal(){var n=document.getElementById('modalProjectName').value;var d=document.getElementById('modalProjectDeadline').value;if(!n)return alert('请输入单位名称');try{var r=await fetch(API+'/project/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n,deadline:d})});var rd=await r.json();if(rd.code===0){alert('创建成功');closeCreateProjectModal();loadProjects()}else{alert(rd.message)}}catch(e){alert('创建失败')}}
     async function confirmDelete(){var inp=document.getElementById('deleteConfirmInput').value;var name=document.getElementById('deleteProjectName').innerText;if(inp!==name)return alert('名称不匹配');try{var r=await fetch(API+'/project/'+projectToDelete,{method:'DELETE'});var d=await r.json();if(d.code===0){alert('删除成功');closeDeleteModal();loadProjects()}else{alert(d.message)}}catch(e){alert('删除失败')}}
-    function exportProject(id){window.open(API+'/project/'+id+'/export','_blank')}
+    async function exportProject(id){
+      // 获取项目名称和人员数据用于记录日志
+      try {
+        var r = await fetch(API + '/project/' + id);
+        var d = await r.json();
+        var projectName = d.data?.name || '未知项目';
+        
+        var r2 = await fetch(API + '/measure/project/' + id + '/all?pageSize=10000');
+        var rd = await r2.json();
+        var list = rd.data?.list || [];
+        
+        // 记录导出日志
+        var ip = await getClientIP();
+        await fetch(API + '/export-logs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            operator: 'admin',
+            exportType: '项目数据(' + projectName + ')',
+            recordCount: list.length,
+            exportData: list,
+            ip: ip
+          })
+        });
+      } catch (e) {
+        console.error('记录导出日志失败:', e);
+      }
+      
+      window.open(API + '/project/' + id + '/export', '_blank');
+    }
     async function viewProject(id){currentProjectId=id;currentPersonList=[];document.getElementById('localSearchInput').value='';document.getElementById('pageSizeSelect').value=personPageSize;try{var r=await fetch(API+'/project/'+id);var d=await r.json();var p=d.data;document.getElementById('currentProjectName').innerText=p.name;document.getElementById('personDeadline').innerText=p.deadline||'-';var r2=await fetch(API+'/measure/project/'+id+'/all');var rd=await r2.json();var list=rd.data?.list||[];currentPersonList=list;document.getElementById('personTotal').innerText=list.length;var onsite=list.filter(function(m){return m.status==='confirmed'&&m.user_id==='admin_onsite'}).length;var offsite=list.filter(function(m){return m.status==='confirmed'&&m.user_id==='admin_offsite'}).length;document.getElementById('personConfirmed').innerText=onsite;document.getElementById('personOffsite').innerText=offsite;document.getElementById('personPending').innerText=list.length-onsite-offsite;renderPersonTable(list);showPage('persons')}catch(e){console.error(e);alert('加载失败')}}
     function renderPersonTable(list){
       console.log('renderPersonTable called with:', list.length, 'records');
