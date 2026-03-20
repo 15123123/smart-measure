@@ -276,15 +276,52 @@ Page({
       }
       const hd = parseInt(head_circumference) || 0;
       
+      // 先查找精确匹配的尺码（有head_range且在范围内）
       for (const size of sizes) {
-        if (size.head_range) {
-          const hedr = size.head_range.replace(/[^\d\-]/g, '').split('-');
-          if (hedr.length === 2) {
-            if (hd < parseInt(hedr[0]) || hd > parseInt(hedr[1])) continue;
+        if (!size.head_range) continue;
+        
+        const hedr = size.head_range.replace(/[^\d\-]/g, '').split('-');
+        if (hedr.length === 2) {
+          const min = parseInt(hedr[0]);
+          const max = parseInt(hedr[1]);
+          if (hd >= min && hd <= max) {
+            return size.size || size.name || '';
           }
         }
-        return size.size || size.name || '';
       }
+      
+      // 没有精确匹配时，找最接近的尺码
+      if (sizes.length > 0) {
+        let closestSize = null;
+        let minDiff = Infinity;
+        
+        for (const size of sizes) {
+          if (!size.head_range) {
+            // 没有范围限制的尺码作为备选
+            closestSize = size;
+            continue;
+          }
+          
+          const hedr = size.head_range.replace(/[^\d\-]/g, '').split('-');
+          if (hedr.length === 2) {
+            const min = parseInt(hedr[0]);
+            const max = parseInt(hedr[1]);
+            // 计算到范围中心的距离
+            const mid = (min + max) / 2;
+            const diff = Math.abs(hd - mid);
+            if (diff < minDiff) {
+              minDiff = diff;
+              closestSize = size;
+            }
+          }
+        }
+        
+        if (closestSize) {
+          return closestSize.size || closestSize.name || '';
+        }
+      }
+      
+      return '';
     }
     // 鞋类: 鞋号
     else if (category === '鞋类' || category === '鞋子' || clothing.name.includes('鞋') || clothing.name.includes('靴')) {

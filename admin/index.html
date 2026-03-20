@@ -2481,14 +2481,44 @@
       // 帽类: 头围
       else if(category==='帽类'){
         if(!head)return'-';
+        var hd=parseInt(head)||0;
+        
+        // 先查找精确匹配的尺码
         for(var i=0;i<sizes.length;i++){
           var s=sizes[i];
           if(s.head_range){
             var hedr=s.head_range.replace(/[^\d\-]/g,'').split('-');
-            if(hedr.length===2&&(hd<parseInt(hedr[0])||hd>parseInt(hedr[1])))continue;
+            if(hedr.length===2){
+              var min=parseInt(hedr[0]);
+              var max=parseInt(hedr[1]);
+              if(hd>=min&&hd<=max)return s.size||'-';
+            }
           }
-          return s.size||'-';
         }
+        
+        // 没有精确匹配时，找最接近的尺码
+        var closestSize=null;
+        var minDiff=Infinity;
+        for(var i=0;i<sizes.length;i++){
+          var s=sizes[i];
+          if(!s.head_range){
+            closestSize=s;
+            continue;
+          }
+          var hedr=s.head_range.replace(/[^\d\-]/g,'').split('-');
+          if(hedr.length===2){
+            var min=parseInt(hedr[0]);
+            var max=parseInt(hedr[1]);
+            var mid=(min+max)/2;
+            var diff=Math.abs(hd-mid);
+            if(diff<minDiff){
+              minDiff=diff;
+              closestSize=s;
+            }
+          }
+        }
+        
+        return closestSize?(closestSize.size||'-'):'-';
       }
       // 鞋类: 鞋号
       else if(category==='鞋类'){
