@@ -375,6 +375,11 @@ app.use('/admin', express.static(path.join(__dirname, 'admin'), {
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/qrcodes', express.static(path.join(__dirname, 'public/qrcodes')));
 
+// favicon 支持
+app.get('/favicon.ico', (req, res) => {
+  res.status(204).end();
+});
+
 // 根目录重定向到管理后台
 app.get('/', (req, res) => {
   res.redirect('/admin');
