@@ -1939,13 +1939,24 @@
     function deleteSubAccount(id){if(!confirm('确定删除此子账号?'))return;var list=JSON.parse(localStorage.getItem('subAccounts')||'[]');list=list.filter(function(s){return s.id!==id});localStorage.setItem('subAccounts',JSON.stringify(list));loadSubAccounts()}
         // 获取IP地址
         async function getClientIP() {
-          try {
-            const res = await fetch('https://api.ipify.org?format=json');
-            const data = await res.json();
-            return data.ip || '-';
-          } catch (e) {
-            return '-';
+          // 尝试多个 API
+          const apis = [
+            'https://api.ipify.org?format=json',
+            'https://ipapi.co/json/',
+            'https://api.my-ip.io/v2/ip.json'
+          ];
+          
+          for (const api of apis) {
+            try {
+              const res = await fetch(api, { timeout: 3000 });
+              const data = await res.json();
+              if (data.ip) return data.ip;
+            } catch (e) {
+              continue;
+            }
           }
+          
+          return '-';
         }
         
         // 获取浏览器信息
