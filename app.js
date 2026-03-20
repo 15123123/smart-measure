@@ -727,8 +727,68 @@ app.post('/api/clothing/deleteByName', async (req, res) => {
 });
 
 // 系统设置 API
-app.get('/api/settings', (req, res) => {
-  res.json(ApiResponse.success(data.settings, '获取成功'));
+app.get('/api/settings', async (req, res) => {
+  // 尝试从数据库读取最新设置
+  let settings = { systemName: '智能量体系统' };
+  try {
+    if (!pool) {
+      pool = mysql.createPool({
+        host: dbConfig.host,
+        port: dbConfig.port,
+        user: dbConfig.user,
+        password: dbConfig.password,
+        database: dbConfig.database,
+        waitForConnections: true,
+        connectionLimit: 10,
+        queueLimit: 0
+      });
+    }
+    const [rows] = await pool.query('SELECT * FROM settings LIMIT 1');
+    if (rows.length > 0) {
+      settings.systemName = rows[0].system_name || '智能量体系统';
+    }
+  } catch (e) {
+    console.error('[设置] 读取失败:', e.message);
+  }
+  res.json(ApiResponse.success(settings, '获取成功'));
+});
+
+// 调试接口：查看当前密码状态
+app.get('/api/debug/password', async (req, res) => {
+  try {
+    if (!pool) {
+      pool = mysql.createPool({
+        host: dbConfig.host,
+        port: dbConfig.port,
+        user: dbConfig.user,
+        password: dbConfig.password,
+        database: dbConfig.database,
+        waitForConnections: true,
+        connectionLimit: 10,
+        queueLimit: 0
+      });
+    }
+    const [rows] = await pool.query('SELECT admin_username, admin_password FROM settings LIMIT 1');
+    if (rows.length > 0) {
+      return res.json(ApiResponse.success({
+        username: rows[0].admin_username,
+        password: rows[0].admin_password,
+        message: '密码从数据库读取'
+      }, '获取成功'));
+    } else {
+      return res.json(ApiResponse.success({
+        username: 'admin',
+        password: 'Admin@123456',
+        message: '数据库无记录，使用默认密码'
+      }, '获取成功'));
+    }
+  } catch (e) {
+    return res.json(ApiResponse.success({
+      username: 'admin',
+      password: 'Admin@123456',
+      message: '数据库连接失败: ' + e.message
+    }, '获取成功'));
+  }
 });
 
 app.post('/api/settings', async (req, res) => {
