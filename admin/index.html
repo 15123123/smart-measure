@@ -3055,29 +3055,9 @@
       const np = document.getElementById('newPwd').value;
       const mp = document.getElementById('confirmPwd').value;
       
-      // 验证当前密码
-      const currentHash = await hashPassword(cp);
-      const storedHash = getPasswordHash();
-      
-      if (currentHash !== storedHash) {
-        alert('当前密码错误');
-        return;
-      }
-      
       // 验证新密码长度
-      if (np.length < 8) {
-        alert('新密码长度不能少于8位');
-        return;
-      }
-      
-      // 验证密码复杂度
-      const hasUpper = /[A-Z]/.test(np);
-      const hasLower = /[a-z]/.test(np);
-      const hasNumber = /[0-9]/.test(np);
-      const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(np);
-      
-      if (!hasUpper || !hasLower || !hasNumber) {
-        alert('密码必须包含：大写字母、小写字母、数字');
+      if (np.length < 6) {
+        alert('新密码长度不能少于6位');
         return;
       }
       
@@ -3087,23 +3067,54 @@
         return;
       }
       
+      // 验证当前密码 - 直接发送到后端验证
+      try {
+        const res = await fetch(API + '/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: 'admin', password: cp })
+        });
+        const data = await res.json();
+        
+        if (data.code !== 0) {
+          alert('当前密码错误');
+          return;
+        }
+      } catch (e) {
+        alert('验证当前密码失败: ' + e.message);
+        return;
+      }
+      
       // 检查是否与当前密码相同
       if (cp === np) {
         alert('新密码不能与当前密码相同');
         return;
       }
       
-      // 计算新密码哈希并存储
-      const newHash = await hashPassword(np);
-      setPasswordHash(newHash);
+      // 发送新密码到后端保存
+      try {
+        const saveRes = await fetch(API + '/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ adminPassword: np })
+        });
+        const saveData = await saveRes.json();
+        
+        if (saveData.code !== 0) {
+          alert('保存密码失败: ' + saveData.message);
+          return;
+        }
+      } catch (e) {
+        alert('保存密码失败: ' + e.message);
+        return;
+      }
       
       // 清空输入框
       document.getElementById('currentPwd').value = '';
       document.getElementById('newPwd').value = '';
       document.getElementById('confirmPwd').value = '';
       
-      alert('密码修改成功！请使用新密码重新登录。\n\n新密码强度：' + 
-        (hasSpecial ? '强' : '中') + '\n建议：建议包含特殊字符以提高安全性。');
+      alert('密码修改成功！请使用新密码重新登录。');
       logout();
     }
     async function batchDeletePersons(){
