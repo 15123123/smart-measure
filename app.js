@@ -404,11 +404,25 @@ app.post('/api/admin/login', (req, res) => {
     return res.status(403).json(ApiResponse.error(`登录尝试过多，请${remainingTime}分钟后再试`, 403));
   }
   
-  // 从localStorage获取保存的账号密码
-  // 由于这是前端存储的，我们需要在请求中传递
-  // 这里使用默认账号或通过settings传递
-  const savedUsername = data.settings.adminUsername || 'admin';
-  const savedPassword = data.settings.adminPassword || 'Admin@123456';
+  // 每次登录都从数据库读取最新密码，确保多设备同步
+  let savedUsername = data.settings.adminUsername || 'admin';
+  let savedPassword = data.settings.adminPassword || 'Admin@123456';
+  
+  if (useMySQL && pool) {
+    try {
+      const [settings] = await pool.query('SELECT * FROM settings LIMIT 1');
+      if (settings.length > 0) {
+        savedUsername = settings[0].admin_username || 'admin';
+        savedPassword = settings[0].admin_password || 'Admin@123456';
+        // 更新内存
+        data.settings.adminUsername = savedUsername;
+        data.settings.adminPassword = savedPassword;
+        logger.info('[登录] 从数据库读取密码:', savedPassword);
+      }
+    } catch (e) {
+      logger.warn('[登录] 读取数据库密码失败:', e.message);
+    }
+  }
   
   // 本地测试模式：允许多种密码登录（包括SHA-256哈希）
   if (FORCE_MEMORY_MODE) {
@@ -642,8 +656,38 @@ app.post('/api/settings', async (req, res) => {
   const { systemName, adminUsername, adminPassword } = req.body;
   
   try {
+    // 确保数据库连接正常
+    if (!useMySQL || !pool) {
+      // 尝试重新连接
+      try {
+        pool = mysql.createPool({
+          host: dbConfig.host,
+          port: dbConfig.port,
+          user: dbConfig.user,
+          password: dbConfig.password,
+          database: dbConfig.database,
+          waitForConnections: true,
+          connectionLimit: 10,
+          queueLimit: 0
+        });
+        const testConn = await pool.getConnection();
+        testConn.release();
+        useMySQL = true;
+        logger.info('[MySQL] 重新连接成功');
+      } catch (e) {
+        logger.warn('[MySQL] 重新连接失败:', e.message);
+      }
+    }
+    
     // 同步更新数据库
     if (useMySQL && pool) {
+      // 先确保 settings 记录存在
+      const [existing] = await pool.query('SELECT id FROM settings LIMIT 1');
+      if (existing.length === 0) {
+        await pool.query('INSERT INTO settings (id, system_name, admin_username, admin_password) VALUES (?, ?, ?, ?)', 
+          [uuidv4(), '智能量体系统', 'admin', 'Admin@123456']);
+      }
+      
       if (systemName) {
         await pool.query('UPDATE settings SET system_name = ?', [systemName]);
       }
@@ -652,6 +696,15 @@ app.post('/api/settings', async (req, res) => {
       }
       if (adminPassword) {
         await pool.query('UPDATE settings SET admin_password = ?', [adminPassword]);
+      }
+      
+      // 立即重新读取以确认保存成功
+      const [updated] = await pool.query('SELECT * FROM settings LIMIT 1');
+      if (updated.length > 0) {
+        data.settings.adminUsername = updated[0].admin_username || 'admin';
+        data.settings.adminPassword = updated[0].admin_password || 'Admin@123456';
+        data.settings.systemName = updated[0].system_name || '智能量体系统';
+        logger.info('[设置] 密码已保存到数据库:', data.settings.adminPassword);
       }
     }
     
