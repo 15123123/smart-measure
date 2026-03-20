@@ -2015,7 +2015,7 @@
             const res = await fetch(API + '/login-logs');
             const data = await res.json();
             const logs = data.data || [];
-            let h = '<div style="background:white;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:1.5rem"><table class="data-table" style="margin:0"><thead><tr style="background:#F9FAFB"><th style="padding:1rem">时间</th><th>用户名</th><th>结果</th><th>IP地址</th><th>浏览器/设备</th></tr></thead><tbody>';
+            let h = '<div style="background:white;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:1.5rem"><table class="data-table" style="margin:0;table-layout:fixed"><thead><tr style="background:#F9FAFB"><th style="padding:1rem;width:160px">时间</th><th style="width:100px">用户名</th><th style="width:80px">结果</th><th style="width:140px">IP地址</th><th>浏览器/设备</th></tr></thead><tbody>';
             logs.forEach(function(l) {
               var resultClass = l.success ? '#D1FAE5' : '#FEE2E2';
               var resultText = l.success ? '成功' : '失败';
@@ -2028,13 +2028,23 @@
                   timeStr = dt.toLocaleString('zh-CN', { hour12: false });
                 }
               }
+              // 格式化IP地址（移除IPv6前缀::ffff:）
+              var ip = l.ip || '-';
+              if (ip.startsWith('::ffff:')) {
+                ip = ip.substring(7);
+              }
               // 简化User-Agent显示
               var ua = l.user_agent || '-';
               var uaDisplay = ua;
-              if (ua !== '-' && ua.length > 30) {
-                uaDisplay = ua.substring(0, 30) + '...';
+              // 尝试提取浏览器名称
+              if (ua !== '-') {
+                if (ua.includes('Chrome')) uaDisplay = 'Chrome';
+                else if (ua.includes('Firefox')) uaDisplay = 'Firefox';
+                else if (ua.includes('Safari')) uaDisplay = 'Safari';
+                else if (ua.includes('Edge')) uaDisplay = 'Edge';
+                else if (ua.length > 25) uaDisplay = ua.substring(0, 25) + '...';
               }
-              h += '<tr><td style="padding:0.875rem 1rem">' + timeStr + '</td><td>' + (l.username || '-') + '</td><td><span style="background:' + resultClass + ';color:' + resultColor + ';padding:0.25rem 0.5rem;border-radius:4px;font-size:0.8rem;font-weight:600">' + resultText + '</span></td><td>' + (l.ip || '-') + '</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + ua + '">' + uaDisplay + '</td></tr>';
+              h += '<tr><td style="padding:0.875rem 1rem">' + timeStr + '</td><td>' + (l.username || '-') + '</td><td><span style="background:' + resultClass + ';color:' + resultColor + ';padding:0.25rem 0.5rem;border-radius:4px;font-size:0.8rem;font-weight:600">' + resultText + '</span></td><td>' + ip + '</td><td style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + ua + '">' + uaDisplay + '</td></tr>';
             });
             h += '</tbody></table></div>';
             if (logs.length > 0) h += '<button class="btn btn-sm" onclick="clearLoginLogs()" style="background:#EF4444;color:white;border:none;padding:0.5rem 1rem;border-radius:6px">清空日志</button>';
@@ -2294,7 +2304,7 @@
         btnSubaccount.style.border = 'none';
         if(document.getElementById('subaccountSettings')){
           document.getElementById('subaccountSettings').style.display = 'block';
-          loadSubaccounts();
+          loadSubAccounts();
         }
       } else if(t === 'loginlog'){
         btnLoginLog.style.background = '#4F46E5';
