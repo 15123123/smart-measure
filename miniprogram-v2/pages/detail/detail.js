@@ -261,6 +261,7 @@ Page({
     'waist_circumference': '腰围',
     'hip_circumference': '臀围',
     'pants_length': '裤长',
+    'sleeve_length': '袖长',
     'shoe_size': '鞋码',
     'remark': '备注',
     'clothing_rows': '服装数据',
@@ -268,7 +269,12 @@ Page({
     'receiver_phone': '联系电话',
     'receiver_address': '收件地址',
     'status': '状态',
-    'user_id': '操作人'
+    'user_id': '操作人',
+    // 服装字段
+    'recommendedSize': '推荐尺码',
+    'size': '尺码',
+    'clothing_name': '服装名称',
+    'clothing_remark': '服装备注'
   },
 
   // 获取字段中文名
@@ -315,6 +321,7 @@ Page({
           action: item.action || '修改',
           create_time: item.create_time || item.createTime || '-',
           user_id: item.user_id || '-',
+          source: item.source || 'miniprogram',  // miniprogram(小程序) | admin(后台)
           changes: changes
         };
       }).filter(item => item !== null);
@@ -331,7 +338,18 @@ Page({
   // 格式化值显示
   formatValue(val) {
     if (val === null || val === undefined || val === '') return '-';
-    if (typeof val === 'object') return JSON.stringify(val);
+    if (typeof val === 'object') {
+      // 如果是服装数组，格式化显示
+      if (Array.isArray(val)) {
+        return val.map(item => {
+          const name = item.name || item.clothing_name || '服装';
+          const size = item.size || item.recommendedSize || '';
+          const remark = item.remark || '';
+          return `${name}: ${size}${remark ? ' (' + remark + ')' : ''}`;
+        }).join('\n');
+      }
+      return JSON.stringify(val);
+    }
     return String(val);
   },
 

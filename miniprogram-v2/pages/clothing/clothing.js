@@ -17,15 +17,21 @@ Page({
   },
 
   onLoad(options) {
+    // 先设置基本参数
     if (options.id && options.projectId) {
       this.setData({
         id: options.id,
         projectId: options.projectId
       });
-      this.loadData(options.id);
     }
-    // 加载服装列表
-    this.loadClothingList();
+    
+    // 使用 Promise.all 并行加载数据，但等待页面初始渲染完成后再 setData
+    Promise.all([
+      this.loadData(options.id),
+      this.loadClothingList()
+    ]).catch(err => {
+      console.error('初始化加载失败', err);
+    });
   },
 
   // 加载数据
@@ -339,7 +345,7 @@ Page({
     try {
       const res = await measureAPI.update(id, {
         clothing_rows: clothingRows
-      });
+      }, 'miniprogram');
       
       wx.showModal({
         title: '保存成功',

@@ -181,6 +181,7 @@
                   </view>
                   <view class="history-user">
                     <text>操作人: {{item.user_id || '未知'}}</text>
+                    <text class="source-tag {{item.source === 'admin' ? 'admin' : 'miniprogram'}}">{{item.source === 'admin' ? '后台' : '小程序'}}</text>
                   </view>
                 </view>
                 <text class="history-arrow">›</text>
@@ -220,12 +221,12 @@
             <view class="compare-values">
               <view class="compare-old">
                 <text class="tag red">旧</text>
-                <text class="val" selectable>{{item.oldValue}}</text>
+                <text class="val" user-select>{{item.oldValue}}</text>
               </view>
               <text class="arrow">→</text>
               <view class="compare-new">
                 <text class="tag green">新</text>
-                <text class="val" selectable>{{item.newValue}}</text>
+                <text class="val" user-select>{{item.newValue}}</text>
               </view>
             </view>
           </view>

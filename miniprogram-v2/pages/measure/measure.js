@@ -258,7 +258,7 @@ Page({
         status: 'confirmed'
       };
       
-      await measureAPI.update(this.data.id, updateData);
+      await measureAPI.update(this.data.id, updateData, 'miniprogram');
       
       logger.info(`保存成功: userId=${finalUserId}, dataId=${this.data.id}`);
       

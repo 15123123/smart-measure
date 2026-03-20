@@ -1103,15 +1103,37 @@ app.get('/api/measure/:id', (req, res) => {
   res.json(ApiResponse.success(mapFieldsReverse(item), '获取成功'));
 });
 
-// 删除量体数据
-app.delete('/api/measure/:id', (req, res) => {
-  const index = data.measureData.findIndex(m => m.id === req.params.id);
-  if (index < 0) {
-    return res.status(404).json(ApiResponse.error('不存在', 404));
+// 删除量体数据（同时删除历史记录）
+app.delete('/api/measure/:id', async (req, res) => {
+  const { id } = req.params;
+  
+  if (useMySQL) {
+    try {
+      // 删除量体数据
+      await pool.query('DELETE FROM measure_data WHERE id = ?', [id]);
+      
+      // 删除关联的历史记录
+      await pool.query('DELETE FROM measure_history WHERE measure_id = ?', [id]);
+      
+      res.json(ApiResponse.success(null, '删除成功'));
+    } catch (err) {
+      logger.error('[删除量体数据失败]', err.message);
+      return res.status(500).json(ApiResponse.error('删除失败: ' + err.message, 500));
+    }
+  } else {
+    // 内存模式
+    const index = data.measureData.findIndex(m => m.id === id);
+    if (index < 0) {
+      return res.status(404).json(ApiResponse.error('不存在', 404));
+    }
+    data.measureData.splice(index, 1);
+    
+    // 同时删除历史记录
+    data.measureHistory = data.measureHistory.filter(h => h.measure_id !== id);
+    
+    saveData();
+    res.json(ApiResponse.success(null, '删除成功'));
   }
-  data.measureData.splice(index, 1);
-  saveData();
-  res.json(ApiResponse.success(null, '删除成功'));
 });
 
 // 创建量体数据

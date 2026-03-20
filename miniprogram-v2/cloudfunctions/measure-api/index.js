@@ -297,6 +297,12 @@ exports.main = async (event, context) => {
         result = await getHistory(params);
         break;
       
+      // 删除量体数据（同时删除历史记录）
+      case 'deleteMeasure':
+        validateParams(params, ['id']);
+        result = await deleteMeasure(params);
+        break;
+      
       // 获取服装列表
       case 'getClothingList':
         result = await getClothingList();
@@ -453,9 +459,10 @@ async function createMeasure(params) {
  * @param {string} params.id - 数据ID
  * @param {object} params.data - 更新数据（小程序字段名）
  * @param {string} params.userId - 用户ID
+ * @param {string} params.source - 来源: 'miniprogram'(小程序) | 'admin'(后台)
  */
 async function updateMeasure(params) {
-  const { id, data, userId } = params;
+  const { id, data, userId, source } = params;
   validateId(id);
   
   if (!data || typeof data !== 'object') {
@@ -521,6 +528,7 @@ async function updateMeasure(params) {
           new_data: mappedData,
           changed_fields: changedFields,
           user_id: userId || 'unknown',
+          source: source || 'miniprogram',  // 来源: miniprogram(小程序) | admin(后台)
           action: data.action || '修改',
           create_time: db.serverDate()
         }
@@ -556,6 +564,43 @@ async function getHistory(params) {
   }));
   
   return response(true, mappedData, '获取成功');
+}
+
+/**
+ * 删除量体数据（同时删除历史记录）
+ * @param {object} params - 参数
+ * @param {string} params.id - 数据ID
+ */
+async function deleteMeasure(params) {
+  const { id } = params;
+  validateId(id);
+  
+  try {
+    // 获取旧数据（用于日志）
+    const old = await db.collection(MEASURE_COLLECTION).doc(id).get();
+    const oldData = old.data;
+    
+    // 删除量体数据
+    await db.collection(MEASURE_COLLECTION).doc(id).remove();
+    
+    // 删除关联的历史记录
+    const historyRes = await db.collection(HISTORY_COLLECTION)
+      .where({ measure_id: id })
+      .get();
+    
+    if (historyRes.data && historyRes.data.length > 0) {
+      // 批量删除历史记录
+      for (const h of historyRes.data) {
+        await db.collection(HISTORY_COLLECTION).doc(h.id).remove();
+      }
+      console.log(`删除 ${historyRes.data.length} 条历史记录`);
+    }
+    
+    return response(true, null, '删除成功');
+  } catch (e) {
+    console.error('删除失败:', e.message);
+    return response(false, null, '删除失败: ' + e.message, 500);
+  }
 }
 
 /**

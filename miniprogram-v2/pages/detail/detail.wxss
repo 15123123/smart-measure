@@ -134,7 +134,7 @@ page {
   transform: rotate(90deg);
 }
 
-.card-title text:last-child {
+.card-title .title-count {
   font-size: 30rpx;
   font-weight: 600;
   color: var(--text-primary);
@@ -339,6 +339,26 @@ page {
 .history-user {
   font-size: 24rpx;
   color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.source-tag {
+  font-size: 20rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+  font-weight: 500;
+}
+
+.source-tag.miniprogram {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.source-tag.admin {
+  background: #fff3e0;
+  color: #ef6c00;
 }
 
 .history-arrow {

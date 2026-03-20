@@ -163,9 +163,10 @@ const measureAPI = {
    * 更新量体数据
    * @param {string} id - 数据ID
    * @param {Object} data - 更新数据
+   * @param {string} source - 来源: 'miniprogram'(小程序) | 'admin'(后台)
    */
-  update(id, data) {
-    return request({ url: `/api/measure/${id}`, method: 'PUT', data });
+  update(id, data, source = 'miniprogram') {
+    return request({ url: `/api/measure/${id}`, method: 'PUT', data: { ...data, source } });
   },
   
   /**
