@@ -1,0 +1,191 @@
+// pages/measure/measure.js
+const app = getApp();
+const { measureAPI } = require('../../utils/api.js');
+
+Page({
+  data: {
+    id: '',
+    projectId: '',
+    loading: false,
+    saving: false,
+    
+    // 基本信息
+    supply_no: '',
+    search_no: '',
+    name: '',
+    gender: '',
+    
+    // 量体数据
+    height: '',
+    weight: '',
+    head_tail: '',
+    neck_circumference: '',
+    shoulder_width: '',
+    chest_circumference: '',
+    waist_circumference: '',
+    sleeve_length: '',
+    hip_circumference: '',
+    pants_length: '',
+    shoe_size: '',
+    
+    // 备注
+    remark: '',
+    
+    // 项目状态
+    projectClosed: false,
+    deadline: ''
+  },
+
+  onLoad(options) {
+    if (options.id) {
+      this.setData({
+        id: options.id,
+        projectId: options.projectId
+      });
+      this.loadData(options.id);
+    }
+  },
+
+  async loadData(id) {
+    this.setData({ loading: true });
+    
+    try {
+      const res = await measureAPI.get(id);
+      const data = res.data;
+      
+      // 检查项目是否已截止
+      let projectClosed = false;
+      let deadline = '';
+      try {
+        const projectRes = await measureAPI.getProjectDeadline(this.data.projectId);
+        if (projectRes.data && projectRes.data.deadline) {
+          const deadlineDate = new Date(projectRes.data.deadline);
+          const now = new Date();
+          if (now > deadlineDate) {
+            projectClosed = true;
+            deadline = projectRes.data.deadline;
+          }
+        }
+      } catch (e) {
+        console.log('获取项目截止时间失败', e);
+      }
+      
+      this.setData({
+        supply_no: data.supply_no || '',
+        search_no: data.search_no || '',
+        name: data.name || '',
+        gender: data.gender || '',
+        height: data.height || '',
+        weight: data.weight || '',
+        head_tail: data.head_tail || '',
+        neck_circumference: data.neck_circumference || '',
+        shoulder_width: data.shoulder_width || '',
+        chest_circumference: data.chest_circumference || '',
+        waist_circumference: data.waist_circumference || '',
+        sleeve_length: data.sleeve_length || '',
+        hip_circumference: data.hip_circumference || '',
+        pants_length: data.pants_length || '',
+        shoe_size: data.shoe_size || '',
+        remark: data.remark || '',
+        projectClosed: projectClosed,
+        deadline: deadline,
+        loading: false
+      });
+    } catch (err) {
+      console.error('加载失败', err);
+      wx.showToast({ title: '加载失败', icon: 'none' });
+      this.setData({ loading: false });
+    }
+  },
+
+  onInput(e) {
+    const field = e.currentTarget.dataset.field;
+    this.setData({ [field]: e.detail.value });
+  },
+
+  onGenderSelect(e) {
+    this.setData({ gender: e.currentTarget.dataset.gender });
+  },
+
+  // 保存数据并设置user_id
+  async saveData(userIdType) {
+    if (this.data.projectClosed) {
+      wx.showToast({ title: '项目已截止', icon: 'none' });
+      return;
+    }
+    
+    if (!this.data.supply_no && !this.data.search_no) {
+      wx.showToast({ title: '请输入供给证号或检索号', icon: 'none' });
+      return;
+    }
+    
+    this.setData({ saving: true });
+    
+    try {
+      let userId = wx.getStorageSync('userId');
+      if (!userId) {
+        userId = 'guest_' + Date.now();
+        wx.setStorageSync('userId', userId);
+      }
+      
+      // 根据确认类型设置user_id
+      let finalUserId = userId;
+      if (userIdType === 'onsite') {
+        finalUserId = 'admin_onsite';
+      } else if (userIdType === 'offsite') {
+        finalUserId = 'admin_offsite';
+      }
+      
+      await measureAPI.update(this.data.id, {
+        supply_no: this.data.supply_no,
+        search_no: this.data.search_no,
+        name: this.data.name,
+        gender: this.data.gender,
+        height: parseFloat(this.data.height) || null,
+        weight: parseFloat(this.data.weight) || null,
+        head_tail: parseFloat(this.data.head_tail) || null,
+        neck_circumference: parseFloat(this.data.neck_circumference) || null,
+        shoulder_width: parseFloat(this.data.shoulder_width) || null,
+        chest_circumference: parseFloat(this.data.chest_circumference) || null,
+        waist_circumference: parseFloat(this.data.waist_circumference) || null,
+        sleeve_length: parseFloat(this.data.sleeve_length) || null,
+        hip_circumference: parseFloat(this.data.hip_circumference) || null,
+        pants_length: parseFloat(this.data.pants_length) || null,
+        shoe_size: parseFloat(this.data.shoe_size) || null,
+        remark: this.data.remark,
+        user_id: finalUserId,
+        status: 'confirmed'
+      });
+      
+      wx.showToast({ title: '保存成功', icon: 'success' });
+      
+      // 保存成功后跳转到服装页面
+      setTimeout(() => {
+        wx.navigateTo({
+          url: '/pages/clothing/clothing?id=' + this.data.id + '&projectId=' + this.data.projectId
+        });
+      }, 1500);
+      
+    } catch (err) {
+      console.error('保存失败', err);
+      wx.showToast({ title: '保存失败', icon: 'none' });
+    } finally {
+      this.setData({ saving: false });
+    }
+  },
+
+  // 现场确认保存
+  onSiteConfirm() {
+    this.saveData('onsite');
+  },
+
+  // 非现场确认保存
+  onOffSiteConfirm() {
+    this.saveData('offsite');
+  },
+
+  // 返回
+  goBack() {
+    wx.navigateBack();
+  }
+});

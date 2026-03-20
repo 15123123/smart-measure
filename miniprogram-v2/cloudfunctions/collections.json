@@ -1,0 +1,22 @@
+[
+  {
+    "name": "measure_data",
+    "description": "量体数据表"
+  },
+  {
+    "name": "measure_history", 
+    "description": "修改历史表"
+  },
+  {
+    "name": "projects",
+    "description": "项目表"
+  },
+  {
+    "name": "clothing_list",
+    "description": "服装列表"
+  },
+  {
+    "name": "settings",
+    "description": "系统设置"
+  }
+]

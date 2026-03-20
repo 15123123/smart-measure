@@ -1,0 +1,70 @@
+<!--pages/shipping/shipping.wxml-->
+<view class="container">
+  <!-- Header -->
+  <view class="page-header">
+    <view class="header-bg"></view>
+    <view class="header-content">
+      <view class="header-icon">📦</view>
+      <view class="header-title">收件信息</view>
+      <view class="header-subtitle">填写快递配送信息</view>
+    </view>
+  </view>
+  
+  <!-- Content -->
+  <view class="page-content">
+    <!-- 收件信息 -->
+    <view class="form-card">
+      <view class="card-title">
+        <text class="title-text">收件信息</text>
+        <text class="title-tip">选填</text>
+      </view>
+      
+      <view class="form-body">
+        <view class="form-item">
+          <text class="form-label">收件人</text>
+          <input class="form-input" value="{{receiver_name}}" data-field="receiver_name" bindinput="onInput" placeholder="请输入收件人姓名" />
+        </view>
+        
+        <view class="form-item">
+          <text class="form-label">联系电话</text>
+          <input class="form-input" value="{{receiver_phone}}" data-field="receiver_phone" bindinput="onInput" type="number" maxlength="11" placeholder="请输入联系电话" />
+        </view>
+        
+        <view class="form-item">
+          <text class="form-label">收件地址</text>
+          <textarea class="form-textarea" value="{{receiver_address}}" data-field="receiver_address" bindinput="onInput" placeholder="请输入详细收件地址" />
+        </view>
+      </view>
+    </view>
+    
+    <!-- 提示 -->
+    <view class="tips-card">
+      <view class="tips-header">
+        <text class="tips-icon">💡</text>
+        <text class="tips-title">温馨提示</text>
+      </view>
+      <view class="tips-list">
+        <view class="tips-item">
+          <text class="tips-dot"></text>
+          <text>此信息用于量体服装的快递配送</text>
+        </view>
+        <view class="tips-item">
+          <text class="tips-dot"></text>
+          <text>请确保联系电话畅通</text>
+        </view>
+        <view class="tips-item">
+          <text class="tips-dot"></text>
+          <text>地址请详细到门牌号</text>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 返回 -->
+    <view class="back-link" bindtap="goBack">‹ 返回</view>
+  </view>
+  
+  <!-- 底部按钮 -->
+  <view class="action-bar">
+    <view class="btn-save" bindtap="onSave">保存并查看详情</view>
+  </view>
+</view>

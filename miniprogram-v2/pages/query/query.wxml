@@ -1,0 +1,67 @@
+<!--pages/query/query.wxml-->
+<view class="container">
+  <!-- Loading -->
+  <view wx:if="{{loading}}" class="loading-view">
+    <view class="loader"></view>
+  </view>
+  
+  <block wx:else>
+    <!-- Header -->
+    <view class="page-header">
+      <view class="header-bg"></view>
+      <view class="header-content">
+        <view class="header-icon">✓</view>
+        <view class="header-title">信息确认</view>
+        <view class="header-subtitle">请核对以下信息</view>
+      </view>
+    </view>
+    
+    <!-- Content -->
+    <view class="page-content">
+      <!-- 信息卡片 -->
+      <view class="info-card">
+        <view class="info-list">
+          <view class="info-item">
+            <view class="info-left">
+              <text class="info-icon">🔖</text>
+              <text class="info-label">供给证号</text>
+            </view>
+            <text class="info-right">{{supplyNo}}</text>
+          </view>
+          <view class="info-item">
+            <view class="info-left">
+              <text class="info-icon">👤</text>
+              <text class="info-label">检索号</text>
+            </view>
+            <text class="info-right">{{searchNo}}</text>
+          </view>
+          <view class="info-item">
+            <view class="info-left">
+              <text class="info-icon">📛</text>
+              <text class="info-label">姓名</text>
+            </view>
+            <text class="info-right">{{name}}</text>
+          </view>
+          <view class="info-item no-line">
+            <view class="info-left">
+              <text class="info-icon">📋</text>
+              <text class="info-label">项目</text>
+            </view>
+            <text class="info-right project">{{projectName}}</text>
+          </view>
+        </view>
+      </view>
+      
+      <!-- 按钮 -->
+      <view class="action-buttons">
+        <view class="btn-primary" bindtap="goToDetail">
+          <text>查看详情</text>
+          <text class="btn-arrow">→</text>
+        </view>
+        <view class="btn-secondary" bindtap="goHome">
+          返回首页
+        </view>
+      </view>
+    </view>
+  </block>
+</view>

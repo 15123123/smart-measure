@@ -1,0 +1,89 @@
+// app.js - 云开发版本
+App({
+  globalData: {
+    userInfo: null,
+    userId: null,
+    token: null,
+    apiBaseUrl: 'https://koa-l3a0-229656-4-1408215646.sh.run.tcloudbase.com',
+    currentProjectId: null,
+    systemName: '智能量体系统',
+    isHarmonyOS: false,
+    // 云开发环境ID - 请替换为你的环境ID
+    cloudEnv: 'prod-2g2msnzi7f0f35d7'
+  },
+  
+  onLaunch(options) {
+    console.log('App launched', options);
+    
+    // 初始化云开发
+    if (wx.cloud) {
+      wx.cloud.init({
+        env: this.globalData.cloudEnv,
+        traceUser: true
+      });
+    }
+    
+    // 检测HarmonyOS
+    this.checkHarmonyOS();
+    
+    // 获取系统设置
+    this.getSettings();
+    
+    // 扫码进入项目
+    if (options.query && options.query.projectId) {
+      this.globalData.currentProjectId = options.query.projectId;
+    }
+  },
+  
+  checkHarmonyOS() {
+    try {
+      const deviceInfo = wx.getDeviceInfo();
+      if (deviceInfo.platform === 'ohos') {
+        this.globalData.isHarmonyOS = true;
+      }
+    } catch (e) {}
+  },
+  
+  onShow(options) {
+    if (options.query && options.query.projectId) {
+      this.globalData.currentProjectId = options.query.projectId;
+    }
+  },
+  
+  // 获取系统设置（云数据库）
+  getSettings() {
+    const db = wx.cloud.database();
+    db.collection('settings').doc('system').get({
+      success: res => {
+        if (res.data && res.data.systemName) {
+          this.globalData.systemName = res.data.systemName;
+          wx.setNavigationBarTitle({
+            title: res.data.systemName
+          });
+        }
+      }
+    });
+  },
+  
+  getUserInfo() {
+    return new Promise((resolve, reject) => {
+      if (this.globalData.userInfo) {
+        resolve(this.globalData.userInfo);
+      } else {
+        const userInfo = wx.getStorageSync('userInfo');
+        const userId = wx.getStorageSync('userId');
+        if (userInfo && userId) {
+          this.globalData.userInfo = userInfo;
+          this.globalData.userId = userId;
+          resolve(userInfo);
+        } else {
+          reject(new Error('未登录'));
+        }
+      }
+    });
+  },
+  
+  checkLogin() {
+    return !!wx.getStorageSync('userId');
+  }
+});

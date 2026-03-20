@@ -1,0 +1,47 @@
+{
+  "name": "智能量体系统",
+  "short_name": "量体系统",
+  "description": "智能量体管理系统 - 企业内部使用",
+  "start_url": "/admin",
+  "display": "standalone",
+  "background_color": "#1890ff",
+  "theme_color": "#1890ff",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4IiB2aWV3Qm94PSIwIDAgMTI4IDEyOCI+PHJlY3Qgd2lkdGg9IjEyOCIgaGVpZ2h0PSIxMjgiIGZpbGw9IiMxODkwZmYiLz48dGV4dCB4PSI2NCIgeT0iNzAiIGZvbnQtc2l6ZT0iNTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIj7moIforr088L3RleHQ+PC9zdmc+",
+      "sizes": "128x128",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNTYiIGhlaWdodD0iMjU2IiB2aWV3Qm94PSIwIDAgMjU2IDI1NiI+PHJlY3Qgd2lkdGg9IjI1NiIgaGVpZ2h0PSIyNTYiIGZpbGw9IiMxODkwZmYiLz48dGV4dCB4PSIxMjgiIHk9IjE0MCIgZm9udC1zaXplPSIxMDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIj7moIforr088L3RleHQ+PC9zdmc+",
+      "sizes": "256x256",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiB2aWV3Qm94PSIwIDAgNTEyIDUxMiI+PHJlY3Qgd2lkdGg9IjUxMiIgaGVpZ2h0PSI1MTIiIGZpbGw9IiMxODkwZmYiLz48dGV4dCB4PSIyNTYiIHyPSIyODAiIGZvbnQtc2l6ZT0iMjAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSI+5pWw5o2uPC90ZXh0Pjwvc3ZnPg==",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "lang": "zh-CN",
+  "scope": "/",
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "项目管理",
+      "short_name": "项目",
+      "description": "查看和管理项目",
+      "url": "/admin?tab=project",
+      "icons": [{ "src": "", "sizes": "96x96" }]
+    },
+    {
+      "name": "人员管理",
+      "short_name": "人员",
+      "description": "管理人员信息",
+      "url": "/admin?tab=measure",
+      "icons": [{ "src": "", "sizes": "96x96" }]
+    }
+  ]
+}

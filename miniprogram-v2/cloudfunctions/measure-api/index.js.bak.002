@@ -1,0 +1,173 @@
+// cloudfunctions/measure-api/index.js
+const cloud = require('wx-server-sdk');
+
+cloud.init({
+  env: cloud.DYNAMIC_CURRENT_ENV
+});
+
+const db = cloud.database();
+const _ = db.command;
+const $ = db.command.aggregate;
+
+// 数据集合名称
+const MEASURE_COLLECTION = 'measure_data';
+const HISTORY_COLLECTION = 'measure_history';
+const PROJECT_COLLECTION = 'projects';
+const CLOTHING_COLLECTION = 'clothing_list';
+
+// 云函数入口
+exports.main = async (event, context) => {
+  // 处理CORS预检请求
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, X-Requested-With',
+      },
+      body: ''
+    };
+  }
+  
+  const { action, ...params } = event;
+  
+  try {
+    switch (action) {
+      // 获取项目列表
+      case 'getProjects':
+        return await getProjects(params);
+      
+      // 根据证号/检索号查询
+      case 'searchMeasure':
+        return await searchMeasure(params);
+      
+      // 获取量体数据
+      case 'getMeasure':
+        return await getMeasure(params);
+      
+      // 创建量体数据
+      case 'createMeasure':
+        return await createMeasure(params);
+      
+      // 更新量体数据
+      case 'updateMeasure':
+        return await updateMeasure(params);
+      
+      // 获取修改历史
+      case 'getHistory':
+        return await getHistory(params);
+      
+      // 获取服装列表
+      case 'getClothingList':
+        return await getClothingList(params);
+      
+      default:
+        return { success: false, message: '未知操作' };
+    }
+  } catch (err) {
+    return { success: false, message: err.message };
+  }
+};
+
+// 获取项目列表
+async function getProjects() {
+  const res = await db.collection(PROJECT_COLLECTION)
+    .orderBy('create_time', 'desc')
+    .get();
+  
+  return { success: true, data: res.data };
+}
+
+// 根据证号/检索号查询
+async function searchMeasure(params) {
+  const { policeNo, name, projectId } = params;
+  let query = {};
+  
+  if (policeNo) {
+    query.police_no = policeNo;
+  } else if (name) {
+    query.name = name;
+  }
+  
+  if (projectId) {
+    query.project_id = projectId;
+  }
+  
+  const res = await db.collection(MEASURE_COLLECTION)
+    .where(query)
+    .get();
+  
+  return { success: true, data: res.data };
+}
+
+// 获取量体数据
+async function getMeasure(params) {
+  const { id } = params;
+  const res = await db.collection(MEASURE_COLLECTION).doc(id).get();
+  return { success: true, data: res.data };
+}
+
+// 创建量体数据
+async function createMeasure(params) {
+  const res = await db.collection(MEASURE_COLLECTION).add({
+    data: {
+      ...params,
+      create_time: db.serverDate(),
+      update_time: db.serverDate()
+    }
+  });
+  return { success: true, data: { id: res._id } };
+}
+
+// 更新量体数据
+async function updateMeasure(params) {
+  const { id, data, userId } = params;
+  
+  // 获取旧数据
+  let oldData = null;
+  try {
+    const old = await db.collection(MEASURE_COLLECTION).doc(id).get();
+    oldData = old.data;
+  } catch (e) {}
+  
+  // 更新数据
+  await db.collection(MEASURE_COLLECTION).doc(id).update({
+    data: {
+      ...data,
+      update_time: db.serverDate()
+    }
+  });
+  
+  // 记录历史
+  if (oldData) {
+    await db.collection(HISTORY_COLLECTION).add({
+      data: {
+        measure_id: id,
+        old_data: oldData,
+        new_data: data,
+        user_id: userId || 'unknown',
+        action: data.action || '修改',
+        create_time: db.serverDate()
+      }
+    });
+  }
+  
+  return { success: true };
+}
+
+// 获取修改历史
+async function getHistory(params) {
+  const { id } = params;
+  const res = await db.collection(HISTORY_COLLECTION)
+    .where({ measure_id: id })
+    .orderBy('create_time', 'desc')
+    .get();
+  return { success: true, data: res.data };
+}
+
+// 获取服装列表
+async function getClothingList() {
+  const res = await db.collection(CLOTHING_COLLECTION).orderBy('sort', 'asc').get();
+  return { success: true, data: res.data };
+}

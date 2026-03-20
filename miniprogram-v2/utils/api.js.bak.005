@@ -1,0 +1,75 @@
+// utils/api.js - 云托管版本（免域名配置）
+const CLOUD_ENV = 'prod-2g2msnzi7f0f35d7';
+const SERVICE_NAME = 'koa-l3a0';
+
+const request = (options) => {
+  return new Promise((resolve, reject) => {
+    const path = options.url.startsWith('http') 
+      ? new URL(options.url).pathname 
+      : options.url;
+    
+    wx.cloud.callContainer({
+      config: {
+        env: CLOUD_ENV
+      },
+      path: path,
+      header: { 
+        'Content-Type': 'application/json', 
+        'X-WX-SERVICE': SERVICE_NAME,
+        ...options.header 
+      },
+      method: options.method || 'GET',
+      data: options.data || {},
+      success: (res) => {
+        if (res.data && res.data.code === 0) {
+          resolve(res.data);
+        } else {
+          wx.showToast({ title: (res.data && res.data.message) || '请求失败', icon: 'none' });
+          reject(res.data);
+        }
+      },
+      fail: (err) => {
+        console.error('API Error:', err);
+        wx.showToast({ title: '网络错误', icon: 'none' });
+        reject(err);
+      }
+    });
+  });
+};
+
+// 项目相关API
+const projectAPI = {
+  list: () => request({ url: '/api/project/list' }),
+  get: (id) => request({ url: `/api/project/${id}` }),
+  create: (data) => request({ url: '/api/project/create', method: 'POST', data }),
+  delete: (id) => request({ url: `/api/project/${id}`, method: 'DELETE' })
+};
+
+// 量体数据API
+const measureAPI = {
+  list: (projectId) => request({ url: `/api/measure/project/${projectId}/all` }),
+  get: (id) => request({ url: `/api/measure/${id}` }),
+  create: (data) => request({ url: '/api/measure', method: 'POST', data }),
+  update: (id, data) => request({ url: `/api/measure/${id}`, method: 'PUT', data }),
+  delete: (id) => request({ url: `/api/measure/${id}`, method: 'DELETE' }),
+  // 精确查询（按供给证号+检索号）
+  exactQuery: (projectId, police_no, name) => request({ url: `/api/measure/project/${projectId}/exact?police_no=${encodeURIComponent(police_no || '')}&name=${encodeURIComponent(name || '')}` }),
+  // 搜索
+  search: (projectId, keyword) => request({ url: `/api/measure/project/${projectId}/search?keyword=${encodeURIComponent(keyword)}` }),
+  // 获取项目截止时间
+  getProjectDeadline: (projectId) => request({ url: `/api/project/${projectId}/deadline` })
+};
+
+// 服装数据API
+const clothingAPI = {
+  // 获取服装列表
+  list: () => request({ url: '/api/clothing/list' }),
+  // 获取服装尺码详情
+  getSizes: (name) => request({ url: `/api/clothing/sizes/${encodeURIComponent(name)}` }),
+  // 添加服装
+  create: (data) => request({ url: '/api/clothing', method: 'POST', data }),
+  // 删除服装
+  delete: (id) => request({ url: `/api/clothing/${id}`, method: 'DELETE' })
+};
+
+module.exports = { projectAPI, measureAPI, clothingAPI };

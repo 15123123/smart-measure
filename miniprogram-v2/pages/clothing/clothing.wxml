@@ -1,0 +1,54 @@
+<!--pages/clothing/clothing.wxml-->
+<view class="container">
+  <view class="page-header">
+    <view class="header-bg"></view>
+    <view class="header-content">
+      <view class="header-icon">👔</view>
+      <view class="header-title">服装数据</view>
+      <view class="header-subtitle">选择服装尺码</view>
+    </view>
+  </view>
+  
+  <view class="page-content">
+    <view class="form-card">
+      <view class="card-title">
+        <text class="title-text">服装列表</text>
+        <text class="add-btn" bindtap="addClothingRow">+ 添加</text>
+      </view>
+      
+      <view class="clothing-table">
+        <view class="table-header">
+          <text class="th-name">服装品名</text>
+          <text class="th-recommend">推荐尺码</text>
+          <text class="th-size">自填尺码</text>
+          <text class="th-remark">备注</text>
+        </view>
+        
+        <view class="table-body">
+          <block wx:for="{{clothingRows}}" wx:key="index">
+            <view class="table-row">
+              <view class="td-name">
+                <picker mode="selector" range="{{clothingList}}" range-key="name" bindchange="onClothingNameChange" data-index="{{index}}">
+                  <text class="picker-text">{{item.name || '选择'}}</text>
+                </picker>
+              </view>
+              <text class="td-recommend">{{item.recommendedSize || '-'}}</text>
+              <input class="td-size" value="{{item.size}}" placeholder="自填" bindinput="onClothingSizeInput" data-index="{{index}}" />
+              <input class="td-remark" value="{{item.remark}}" placeholder="备注" bindinput="onClothingRemarkInput" data-index="{{index}}" />
+            </view>
+          </block>
+        </view>
+      </view>
+      
+      <view wx:if="{{clothingRows.length === 0}}" class="empty-tip">
+        <text>点击"+添加"添加服装</text>
+      </view>
+    </view>
+    
+    <view class="back-link" bindtap="goBack">‹ 返回</view>
+  </view>
+  
+  <view class="action-bar">
+    <view class="btn-save" bindtap="onSave">保存查看</view>
+  </view>
+</view>

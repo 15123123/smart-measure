@@ -1,0 +1,28 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/login/login",
+    "pages/measure/measure",
+    "pages/address/address",
+    "pages/clothing/clothing",
+    "pages/query/query",
+    "pages/detail/detail"
+  ],
+  "cloud": true,
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#667EEA",
+    "navigationBarTitleText": "智能量体系统",
+    "navigationBarTextStyle": "white",
+    "enablePullDownRefresh": false,
+    "pageOrientation": "portrait"
+  },
+  "permission": {
+    "scope.userLocation": {
+      "desc": "用于获取位置信息"
+    }
+  },
+  "sitemapLocation": "sitemap.json",
+  "style": "v2",
+  "lazyCodeLoading": "requiredComponents"
+}

@@ -1,0 +1,237 @@
+<!--pages/detail/detail.wxml-->
+<view class="container">
+  <!-- Loading -->
+  <view wx:if="{{loading}}" class="loading-view">
+    <view class="loader"></view>
+  </view>
+  
+  <block wx:else>
+    <!-- 顶部 -->
+    <view class="page-header">
+      <view class="header-bg"></view>
+      <view class="header-content">
+        <view class="header-icon">📋</view>
+        <view class="header-title">信息详情</view>
+        <view class="header-subtitle">{{projectName}}</view>
+      </view>
+    </view>
+    
+    <!-- 内容 -->
+    <view class="page-content">
+      <!-- 基本信息 -->
+      <view class="form-card">
+        <view class="card-title">
+          <text class="title-icon">01</text>
+          <text>基本信息</text>
+        </view>
+        <view class="form-body">
+          <view class="form-item">
+            <text class="form-label">供给证号</text>
+            <text class="form-value">{{supplyNo}}</text>
+          </view>
+          <view class="form-item">
+            <text class="form-label">检索号</text>
+            <text class="form-value">{{searchNo}}</text>
+          </view>
+          <view class="form-item">
+            <text class="form-label">性别</text>
+            <text class="form-value">{{gender}}</text>
+          </view>
+        </view>
+      </view>
+      
+      <!-- 量体数据 - 1x3网格 -->
+      <view class="form-card">
+        <view class="card-title">
+          <text class="title-icon">02</text>
+          <text>量体数据</text>
+        </view>
+        <view class="form-body">
+          <view class="measure-grid-3">
+            <view class="measure-item">
+              <text class="measure-label">身高</text>
+              <view class="measure-display">
+                <text class="measure-value">{{height}}</text>
+                <text class="measure-unit">cm</text>
+              </view>
+            </view>
+            <view class="measure-item">
+              <text class="measure-label">体重</text>
+              <view class="measure-display">
+                <text class="measure-value">{{weight}}</text>
+                <text class="measure-unit">kg</text>
+              </view>
+            </view>
+            <view class="measure-item">
+              <text class="measure-label">头围</text>
+              <view class="measure-display">
+                <text class="measure-value">{{head_tail}}</text>
+                <text class="measure-unit">cm</text>
+              </view>
+            </view>
+            <view class="measure-item">
+              <text class="measure-label">颈围</text>
+              <view class="measure-display">
+                <text class="measure-value">{{neck_circumference}}</text>
+                <text class="measure-unit">cm</text>
+              </view>
+            </view>
+            <view class="measure-item">
+              <text class="measure-label">肩宽</text>
+              <view class="measure-display">
+                <text class="measure-value">{{shoulder_width}}</text>
+                <text class="measure-unit">cm</text>
+              </view>
+            </view>
+            <view class="measure-item">
+              <text class="measure-label">胸围</text>
+              <view class="measure-display">
+                <text class="measure-value">{{chest_circumference}}</text>
+                <text class="measure-unit">cm</text>
+              </view>
+            </view>
+            <view class="measure-item">
+              <text class="measure-label">腰围</text>
+              <view class="measure-display">
+                <text class="measure-value">{{waist_circumference}}</text>
+                <text class="measure-unit">cm</text>
+              </view>
+            </view>
+            <view class="measure-item">
+              <text class="measure-label">臀围</text>
+              <view class="measure-display">
+                <text class="measure-value">{{hip_circumference}}</text>
+                <text class="measure-unit">cm</text>
+              </view>
+            </view>
+            <view class="measure-item">
+              <text class="measure-label">袖长</text>
+              <view class="measure-display">
+                <text class="measure-value">{{sleeve_length}}</text>
+                <text class="measure-unit">cm</text>
+              </view>
+            </view>
+            <view class="measure-item">
+              <text class="measure-label">裤长</text>
+              <view class="measure-display">
+                <text class="measure-value">{{pants_length}}</text>
+                <text class="measure-unit">cm</text>
+              </view>
+            </view>
+            <view class="measure-item">
+              <text class="measure-label">鞋码</text>
+              <view class="measure-display">
+                <text class="measure-value">{{shoe_size}}</text>
+                <text class="measure-unit">码</text>
+              </view>
+            </view>
+          </view>
+          <view class="remark-row" wx:if="{{remark && remark !== '-' && remark !== '-'}}">
+            <text class="remark-label">备注</text>
+            <text class="remark-value">{{remark}}</text>
+          </view>
+        </view>
+      </view>
+      
+      <!-- 服装数据 -->
+      <view class="form-card" wx:if="{{clothingRows.length > 0}}">
+        <view class="card-title">
+          <text class="title-icon">03</text>
+          <text>服装数据</text>
+          <text class="title-count">共{{clothingRows.length}}项</text>
+        </view>
+        <view class="form-body">
+          <view class="clothing-list">
+            <view class="clothing-item" wx:for="{{clothingRows}}" wx:key="index">
+              <view class="clothing-info">
+                <text class="clothing-name">{{item.name}}</text>
+                <view class="clothing-sizes">
+                  <view class="size-tag recommend" wx:if="{{item.recommendedSize && item.recommendedSize !== '-'}}">
+                    <text>推荐尺码: {{item.recommendedSize}}</text>
+                  </view>
+                  <view class="size-tag green" wx:if="{{item.size && item.size !== '-'}}">
+                    <text>自填尺码: {{item.size}}</text>
+                  </view>
+                </view>
+              </view>
+              <view class="clothing-remark" wx:if="{{item.remark}}">
+                <text>{{item.remark}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+      
+      <!-- 修改历史 -->
+      <view class="form-card">
+        <view class="card-title" bindtap="toggleHistory">
+          <text class="title-icon">04</text>
+          <text>修改历史</text>
+          <text class="toggle-arrow {{showHistory ? 'up' : ''}}">›</text>
+        </view>
+        <view class="history-body" wx:if="{{showHistory}}">
+          <block wx:if="{{history.length > 0}}">
+            <view class="history-list">
+              <view class="history-item" wx:for="{{history}}" wx:key="index" bindtap="showHistoryDetail" data-index="{{index}}">
+                <view class="history-dot"></view>
+                <view class="history-content">
+                  <view class="history-header">
+                    <text class="history-action">{{item.action || '修改'}}</text>
+                    <text class="history-time">{{item.create_time}}</text>
+                  </view>
+                  <view class="history-user">
+                    <text>操作人: {{item.user_id || '未知'}}</text>
+                    <text class="source-tag {{item.source === 'admin' ? 'admin' : 'miniprogram'}}">{{item.source === 'admin' ? '后台' : '小程序'}}</text>
+                  </view>
+                </view>
+                <text class="history-arrow">›</text>
+              </view>
+            </view>
+          </block>
+          <block wx:else>
+            <view class="empty-history">
+              <text>暂无修改记录</text>
+            </view>
+          </block>
+        </view>
+      </view>
+      
+      <!-- 返回 -->
+      <view class="back-link-card" bindtap="goHome">🏠 返回首页</view>
+      
+      <view class="space"></view>
+    </view>
+  </block>
+  
+  <!-- 对比弹窗 -->
+  <view class="modal-mask" wx:if="{{showCompare}}" bindtap="closeCompare">
+    <view class="modal-content" catchtap="stopPropagation">
+      <view class="modal-header">
+        <text class="modal-title">数据对比</text>
+        <text class="modal-close" bindtap="closeCompare">✕</text>
+      </view>
+      <view class="modal-body">
+        <view class="compare-info">
+          <text class="compare-time">{{selectedHistory.create_time}}</text>
+          <text class="compare-user">操作人: {{selectedHistory.user_id}}</text>
+        </view>
+        <view class="compare-list">
+          <view class="compare-item" wx:for="{{selectedHistory.changes}}" wx:key="index">
+            <view class="compare-field">{{item.field}}</view>
+            <view class="compare-values">
+              <view class="compare-old">
+                <text class="tag red">旧</text>
+                <text class="val" user-select>{{item.oldValue}}</text>
+              </view>
+              <text class="arrow">→</text>
+              <view class="compare-new">
+                <text class="tag green">新</text>
+                <text class="val" user-select>{{item.newValue}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

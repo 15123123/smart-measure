@@ -1,0 +1,6 @@
+name: smart-measure
+version: 1.0.0
+entry: app.js
+region: ap-guangzhou
+runtime: Nodejs16
+port: 80

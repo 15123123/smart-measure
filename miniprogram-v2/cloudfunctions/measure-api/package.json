@@ -1,0 +1,14 @@
+{
+  "name": "measure-api",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  },
+  "config": {
+    "env": "cloud1-4g0gvmxod61e94ff"
+  },
+  "permissions": {
+    "openapi": ["wxacode.getUnlimited"]
+  }
+}
