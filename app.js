@@ -218,12 +218,8 @@ async function initDatabase() {
     if (settings.length === 0) {
       await connection.query('INSERT INTO settings (id, system_name, admin_username, admin_password) VALUES (?, ?, ?, ?)', 
         [uuidv4(), '智能量体系统', 'admin', 'Admin@123456']);
-    } else {
-      // 从数据库加载settings到内存
-      data.settings.adminUsername = settings[0].admin_username || 'admin';
-      data.settings.adminPassword = settings[0].admin_password || 'Admin@123456';
-      data.settings.systemName = settings[0].system_name || '智能量体系统';
     }
+    // 密码只存数据库，不加载到内存
     
     connection.release();
     useMySQL = true;
@@ -242,9 +238,8 @@ let data = {
   measureHistory: [],
   clothing: [],
   settings: {
-    systemName: '智能量体系统',
-    adminUsername: 'admin',
-    adminPassword: 'Admin@123456'
+    systemName: '智能量体系统'
+    // 密码只存数据库，不存内存
   }
 };
 
@@ -404,9 +399,9 @@ app.post('/api/admin/login', (req, res) => {
     return res.status(403).json(ApiResponse.error(`登录尝试过多，请${remainingTime}分钟后再试`, 403));
   }
   
-  // 每次登录都从数据库读取最新密码，确保多设备同步
-  let savedUsername = data.settings.adminUsername || 'admin';
-  let savedPassword = data.settings.adminPassword || 'Admin@123456';
+  // 每次登录只从数据库读取密码，不使用内存缓存
+  let savedUsername = 'admin';
+  let savedPassword = 'Admin@123456';
   
   if (useMySQL && pool) {
     try {
@@ -414,13 +409,10 @@ app.post('/api/admin/login', (req, res) => {
       if (settings.length > 0) {
         savedUsername = settings[0].admin_username || 'admin';
         savedPassword = settings[0].admin_password || 'Admin@123456';
-        // 更新内存
-        data.settings.adminUsername = savedUsername;
-        data.settings.adminPassword = savedPassword;
-        logger.info('[登录] 从数据库读取密码:', savedPassword);
+        logger.info('[登录] 从数据库读取账号密码');
       }
     } catch (e) {
-      logger.warn('[登录] 读取数据库密码失败:', e.message);
+      logger.warn('[登录] 读取数据库密码失败，使用默认值');
     }
   }
   
@@ -701,24 +693,11 @@ app.post('/api/settings', async (req, res) => {
       // 立即重新读取以确认保存成功
       const [updated] = await pool.query('SELECT * FROM settings LIMIT 1');
       if (updated.length > 0) {
-        data.settings.adminUsername = updated[0].admin_username || 'admin';
-        data.settings.adminPassword = updated[0].admin_password || 'Admin@123456';
-        data.settings.systemName = updated[0].system_name || '智能量体系统';
-        logger.info('[设置] 密码已保存到数据库:', data.settings.adminPassword);
+        logger.info('[设置] 密码已保存到数据库');
       }
     }
     
-    // 更新内存
-    if (systemName) {
-      data.settings.systemName = systemName;
-    }
-    if (adminUsername) {
-      data.settings.adminUsername = adminUsername;
-    }
-    if (adminPassword) {
-      data.settings.adminPassword = adminPassword;
-    }
-    
+    // 不同步到内存，密码只存数据库
     res.json(ApiResponse.success(null, '保存成功'));
   } catch (e) {
     res.status(500).json(ApiResponse.error('保存失败: ' + e.message, 500));
